@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Calificar Entrega{% endblock %}
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+    <div class="border-b pb-4 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Calificar Entrega</h1>
+        <p class="text-gray-600"><strong>Estudiante:</strong> {{ entrega.estudiante.user.get_full_name }}</p>
+        <p class="text-gray-600"><strong>Actividad:</strong> {{ entrega.actividad.titulo }}</p>
+        {% if entrega.archivo %}
+        <p class="mt-2"><strong>Archivo adjunto:</strong> 
+            <a href="{{ entrega.archivo.url }}" class="text-indigo-600 hover:underline" target="_blank">Descargar archivo</a>
+        </p>
+        {% endif %}
+        {% if entrega.comentarios %}
+        <blockquote class="mt-2 pl-4 border-l-4 border-gray-300">
+            <p class="text-gray-700 italic">"{{ entrega.comentarios }}"</p>
+        </blockquote>
+        {% endif %}
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="space-y-4">{{ form.as_p }}</div>
+        <div class="mt-6 flex items-center gap-4">
+            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Guardar Calificación
+            </button>
+            <a href="{% url 'actividad_entregas' entrega.actividad.pk %}" class="text-gray-600 hover:text-gray-900">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Maestro{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">{{ maestro.user.get_full_name }}</h1>
+            <p class="text-md text-gray-500">{{ maestro.user.email }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'maestro_update' maestro.pk %}" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Editar</a>
+            <a href="{% url 'maestros' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Volver a la Lista</a>
+        </div>
+    </div>
+
+    <div class="border-t border-gray-200 pt-4">
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+            <div class="sm:col-span-1">
+                <dt class="text-sm font-medium text-gray-500">Número de Empleado</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ maestro.numero_empleado }}</dd>
+            </div>
+            <div class="sm:col-span-1">
+                <dt class="text-sm font-medium text-gray-500">Especialidad</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ maestro.especialidad }}</dd>
+            </div>
+            <div class="sm:col-span-1">
+                <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ maestro.telefono_contacto|default:"No especificado" }}</dd>
+            </div>
+             <div class="sm:col-span-1">
+                <dt class="text-sm font-medium text-gray-500">Fecha de Contratación</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ maestro.fecha_contratacion }}</dd>
+            </div>
+        </dl>
+    </div>
+
+    <div class="mt-8 border-t border-gray-200 pt-4">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Cursos Asignados</h2>
+        {% if maestro.cursos.all %}
+            <ul class="divide-y divide-gray-200">
+                {% for curso in maestro.cursos.all %}
+                    <li class="py-3 flex items-center justify-between">
+                        <span class="text-gray-700">{{ curso.nombre }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-500">Este maestro no tiene cursos asignados todavía.</p>
+        {% endif %}
+        <a href="{% url 'asignar_cursos_maestro' maestro.pk %}" class="mt-4 inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Gestionar Cursos
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{% block title %}Sistema de Gestión Escolar{% endblock title %}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    {% block styles %}{% endblock styles %}
+</head>
+
+<body class="bg-gray-100 font-sans">
+    
+    <nav class="bg-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0">
+                    <a href="" class="text-white text-2xl font-bold">🎓 Gestión Escolar</a>
+                </div>
+                
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{% url 'home' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Inicio</a>
+                        <a href="{% url 'maestros' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Maestros</a>
+                        <a href="{% url 'gestion_cursos' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Cursos</a>
+                        <a href="{% url 'estudiante_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Estudiantes</a>
+                        <a href="{% url 'horario' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Horario</a>
+                        <a href="{% url 'periodo_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Periodos</a>
+                    </div>
+                </div>
+
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+                        <span class="sr-only">Abrir menú principal</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <main class="py-10">
+        <div class="max-w-7xl mx-auto h-dvh px-4 sm:px-6 lg:px-8">
+            {% block content %}
+            {% endblock content %}
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 mt-auto">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm text-gray-400">
+                &copy; {% now "Y" %} Sistema de Gestión Escolar. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock scripts %}
+
+</body>
+</html>

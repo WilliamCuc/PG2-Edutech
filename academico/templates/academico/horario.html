@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Asignación de Horarios{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Horario del Periodo: {{ periodo_actual.nombre }}</h1>
+        <div>
+            <a href="{% url 'clase_create' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                + Asignar Nueva Clase
+            </a>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse border border-gray-300">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border border-gray-300 p-2">Hora</th>
+                    {% for dia_cod, dia_nombre in dias_semana %}
+                    <th class="border border-gray-300 p-2">{{ dia_nombre }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for hora, dias in horario.items %}
+                <tr>
+                    <td class="border border-gray-300 p-2 font-mono bg-gray-50">{{ hora|time:"H:i" }}</td>
+                    {% for dia_cod, clase in dias.items %}
+                        <td class="border border-gray-300 p-2 align-top h-24">
+                            {% if clase %}
+                            <div class="bg-blue-100 p-2 rounded relative group">
+                                <p class="font-bold text-sm text-blue-800">{{ clase.curso.nombre }}</p>
+                                <p class="text-xs text-gray-600">{{ clase.maestro.user.get_full_name }}</p>
+                                
+                                <p class="text-xs text-blue-600 mt-1">
+                                    {{ clase.estudiantes.count }} estudiante(s) inscrito(s)
+                                </p>
+
+                                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                    <a href="{% url 'clase_inscribir_estudiantes' clase.pk %}" title="Inscribir Estudiantes" class="text-lg text-green-600 hover:text-green-900">👥</a>
+                                    
+                                    <a href="{% url 'clase_update' clase.pk %}" title="Editar Clase" class="text-indigo-600 hover:text-indigo-900">✏️</a>
+                                    <a href="{% url 'clase_delete' clase.pk %}" title="Eliminar Clase" class="text-red-600 hover:text-red-900">🗑️</a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

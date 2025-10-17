@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar Periodo{% else %}Crear Periodo{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">
+        {% if form.instance.pk %}Editar Periodo Académico{% else %}Crear Nuevo Periodo{% endif %}
+    </h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="space-y-4">
+            {{ form.as_p }}
+        </div>
+        <div class="mt-6 flex items-center gap-4">
+            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Guardar
+            </button>
+            <a href="{% url 'periodo_list' %}" class="text-gray-600 hover:text-gray-900">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+services:
+  # Servicio de la Base de Datos (MySQL)
+  db:
+    image: mysql:9.4 # Usar una imagen oficial de MySQL
+    container_name: db_edutech
+    volumes:
+      - mysql_data:/var/lib/mysql/ # Persistir los datos en una ruta diferente
+    environment:
+      - MYSQL_DATABASE=edutech
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3307:3306" # El puerto por defecto de MySQL es 3306
+
+  # Servicio de la Aplicación (Django)
+  web:
+    build: .
+    container_name: django_edutech
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./app:/app
+    ports:
+      - "6969:8000"
+    env_file: # <-- AÑADE ESTA SECCIÓN
+      - .env
+
+    environment:
+      - DB_NAME=edutech
+      - DB_USER=admin
+      - DB_PASS=root
+      - DB_HOST=db # El nombre del servicio sigue siendo 'db'
+      - DB_PORT=3306 # Actualizar el puerto a 3306
+    depends_on:
+      - db
+
+volumes:
+  mysql_data: 
