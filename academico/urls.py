@@ -28,4 +28,5 @@ urlpatterns = [
     path('cargos/nuevo/', views.CargoCreateView.as_view(), name='cargo_create'),
     path('cargos/<int:pk>/editar/', views.CargoUpdateView.as_view(), name='cargo_update'),
     path('cargo/<int:cargo_pk>/registrar-pago/', views.RegistrarPagoView.as_view(), name='registrar_pago'),
+    path('clase/<int:clase_pk>/reporte-ia/', views.DescargarReporteIAView.as_view(), name='descargar_reporte_ia'),
 ]

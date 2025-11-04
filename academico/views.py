@@ -6,7 +6,12 @@ from django.views import View
 from .models import PeriodoAcademico, Clase, Curso, BitacoraPedagogica, Pago, Cargo
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 import datetime
-from users.models import Maestro
+from users.models import Maestro, User
+from .models import Planificacion
+import requests
+from django.http import JsonResponse, HttpResponseServerError, HttpResponse
+from django.template.loader import render_to_string # 👈 Importa esto
+from weasyprint import HTML # 👈 Importa WeasyPrint
 
 
 # Create your views here.
@@ -326,5 +331,83 @@ class RegistrarPagoView(CreateView):
         # ¡IMPORTANTE!
         # La señal (signal) que creamos se disparará automáticamente aquí,
         # llamará a cargo.actualizar_estado() y marcará el cargo como "Pagado".
+        
+        return response
+
+class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    Genera el reporte de IA comparando la planificación con el diario.
+    """
+    def test_func(self):
+        # Seguridad: Solo el maestro de la clase puede descargar
+        clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
+        return self.request.user.user_type == User.UserType.MAESTRO and clase.maestro == self.request.user.maestro
+
+    def get(self, request, *args, **kwargs):
+        clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
+
+        # 1. Obtener los datos de Django
+        # (Aquí puedes filtrar por fechas, pero por ahora tomamos el primero y todos)
+        planificacion_actual = Planificacion.objects.filter(clase=clase).order_by('-fecha_inicio').first()
+        entradas_diario = BitacoraPedagogica.objects.filter(clase=clase).order_by('fecha')
+
+        if not planificacion_actual or not entradas_diario.exists():
+            return JsonResponse({"error": "No hay suficientes datos (planificación o diario) para generar un reporte."}, status=404)
+
+        # 2. Convertir los datos a texto simple para la IA
+        texto_plan = f"Objetivos: {planificacion_actual.objetivos}. Actividades Planificadas: {planificacion_actual.actividades_planificadas}."
+        
+        texto_diario = ""
+        for entrada in entradas_diario:
+            texto_diario += f"Fecha {entrada.fecha}: {entrada.temas_cubiertos}. Observaciones: {entrada.observaciones_generales}.\n"
+        
+        # 3. Preparar el JSON para n8n
+        json_para_n8n = {
+            "plan": texto_plan,
+            "diario": texto_diario,
+            "curso": clase.curso.nombre
+        }
+
+        # 4. Llamar al Webhook de n8n
+        # ¡IMPORTANTE! Cambia esta URL por la URL de tu webhook de n8n
+        # y usa el nombre del servicio de Docker, no 'localhost'.
+        webhook_url = "http://n8n_ia:5678/webhook-test/d545ed76-0dd8-49e7-b686-dea2598465bc"
+        
+        try:
+            response = requests.post(webhook_url, json=json_para_n8n, timeout=15)
+            response.raise_for_status() # Lanza un error si n8n falla
+            print(response.text)
+            
+            opinion_ia = response.text
+            
+            # 2. (Opcional) Limpiamos el texto que viene de la IA
+            if opinion_ia.startswith("**OPINIÓN:**"):
+                opinion_ia = opinion_ia.replace("**OPINIÓN:**", "").strip()
+        except requests.exceptions.ConnectionError:
+            return HttpResponseServerError("Error: No se pudo conectar al servicio de n8n. ¿Está encendido?")
+        except requests.exceptions.RequestException as e:
+            return HttpResponseServerError(f"Error al llamar a la IA: {e}")
+
+        # 5. Devolver la respuesta (POR AHORA)
+        # En el futuro, aquí generarías el PDF con estos datos.
+        context = {
+            "curso": clase.curso.nombre,
+            "maestro": clase.maestro,
+            "planificacion": texto_plan,
+            "diario": texto_diario,
+            "opinion_ia": opinion_ia
+        }
+        
+        # Renderizamos la plantilla HTML a un string
+        html_string = render_to_string('academico/reporte_ia_pdf.html', context)
+        
+        # Generamos el PDF en memoria
+        pdf_file = HTML(string=html_string).write_pdf()
+        
+        # Creamos la respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        
+        # Añadimos la cabecera para que el navegador lo descargue
+        response['Content-Disposition'] = f'attachment; filename="reporte_{clase.curso.nombre}.pdf"'
         
         return response

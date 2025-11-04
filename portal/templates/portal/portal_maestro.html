@@ -39,6 +39,12 @@
                             <a href="{% url 'bitacora_list' clase.pk %}" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-bold py-2 px-3 rounded">
                                 Diario Pedagógico
                             </a>
+                            <a href="{% url 'descargar_reporte_ia' clase.pk %}" 
+                                class="bg-red-500 hover:bg-red-700 text-white text-sm font-bold py-2 px-3 rounded"
+                                target="_blank"
+                                title="Generar Reporte con IA">
+                                🤖 Reporte IA
+                            </a>
                             <a href="{% url 'actividad_create' clase.pk %}" class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-2 px-3 rounded">
                                 + Añadir Actividad
                             </a>

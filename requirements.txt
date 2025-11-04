@@ -3,3 +3,5 @@ mysqlclient==2.1.1
 python-decouple
 django-jazzmin
 pillow
+requests
+WeasyPrint
