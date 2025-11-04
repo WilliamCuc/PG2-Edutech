@@ -12,16 +12,63 @@ from django.db.models import OuterRef, Subquery, Exists, Q, DecimalField
 from django.utils import timezone
 from datetime import timedelta
 
-def maestros(request):
-    lista_de_maestros = Maestro.objects.all()
-    
-    return render(request, 'users/maestros/lista.html', {'lista_de_maestros': lista_de_maestros})
+class MaestroListView(ListView):
+    model = Maestro
+    template_name = 'users/maestros/lista.html'
+    context_object_name = 'maestros' # 👈 Usaremos 'maestros' en el template
+    paginate_by = 10  # Muestra 10 maestros por página
+
+    def get_queryset(self):
+        """
+        Esta función se encarga de filtrar y ordenar los resultados
+        basado en los parámetros de la URL (GET).
+        """
+        # Empezamos con todos los maestros
+        queryset = Maestro.objects.all().select_related('user').prefetch_related('cursos')
+
+        # 1. Búsqueda (parámetro 'q')
+        search_query = self.request.GET.get('q', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(especialidad__icontains=search_query) |
+                Q(numero_empleado__icontains=search_query)
+            )
+
+        # 2. Filtrado por Estado (parámetro 'status')
+        status_filter = self.request.GET.get('status', None)
+        if status_filter and status_filter != 'all':
+            queryset = queryset.filter(estado=status_filter)
+        
+        # 3. Ordenamiento (parámetro 'sort')
+        sort_by = self.request.GET.get('sort', 'user__first_name') # Ordenar por nombre A-Z por defecto
+        queryset = queryset.order_by(sort_by)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """
+        Pasa los valores actuales de los filtros a la plantilla
+        para que los <select> e <input> se queden seleccionados.
+        """
+        context = super().get_context_data(**kwargs)
+        
+        # Pasa los valores GET actuales
+        context['q'] = self.request.GET.get('q', '')
+        context['current_status'] = self.request.GET.get('status', 'all')
+        context['current_sort'] = self.request.GET.get('sort', 'user__first_name')
+        
+        # Pasa todos los parámetros GET para la paginación
+        context['get_params'] = self.request.GET.urlencode()
+        
+        return context
 
 class MaestroCreateView(CreateView):
     model = Maestro
     form_class = MaestroForm
-    template_name = 'usuarios/maestro_form.html'
-    success_url = reverse_lazy('maestro_list')
+    template_name = 'users/maestros/maestro_form.html'
+    success_url = reverse_lazy('maestros')
 
     def form_valid(self, form):
         with transaction.atomic():

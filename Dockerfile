@@ -25,6 +25,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 6. Copiar el resto del código de la aplicación al directorio de trabajo
-COPY ./app .
+COPY . .
 
 # El comando para correr la app se definirá en docker-compose.yml
