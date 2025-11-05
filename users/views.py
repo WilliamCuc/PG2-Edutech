@@ -87,7 +87,7 @@ class MaestroCreateView(CreateView):
 class MaestroUpdateView(UpdateView):
     model = Maestro
     form_class = MaestroForm
-    template_name = 'usuarios/maestro_form.html'
+    template_name = 'users/maestro_form.html'
     success_url = reverse_lazy('maestro_list')
     
     def form_valid(self, form):
@@ -102,7 +102,7 @@ class MaestroUpdateView(UpdateView):
 
 class MaestroDeleteView(DeleteView):
     model = Maestro
-    template_name = 'usuarios/maestro_confirm_delete.html'
+    template_name = 'users/maestro_confirm_delete.html'
     success_url = reverse_lazy('maestro_list')
 
 class EstudianteListView(ListView):
@@ -179,7 +179,7 @@ class EstudianteCreateView(CreateView):
 class EstudianteUpdateView(UpdateView):
     model = Estudiante
     form_class = EstudianteForm
-    template_name = 'usuarios/estudiante_form.html'
+    template_name = 'users/estudiante_form.html'
     success_url = reverse_lazy('estudiante_list')
     
     def form_valid(self, form):
@@ -194,7 +194,7 @@ class EstudianteUpdateView(UpdateView):
 
 class EstudianteDeleteView(DeleteView):
     model = Estudiante
-    template_name = 'usuarios/estudiante_confirm_delete.html'
+    template_name = 'users/estudiante_confirm_delete.html'
     success_url = reverse_lazy('estudiante_list')
 
 class MaestroDetailView(DetailView):
