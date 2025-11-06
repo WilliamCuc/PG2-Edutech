@@ -35,7 +35,6 @@
 
                             {% elif user.user_type == 'MAESTRO' %}
                                 <a href="{% url 'portal_maestro' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Portal</a>
-                                <a href="{% url 'maestro_update' maestro.pk %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Perfil</a>
 
                             {% elif user.user_type == 'ESTUDIANTE' %}
                                 <a href="{% url 'portal_estudiante' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Portal</a>

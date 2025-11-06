@@ -101,21 +101,22 @@ class BitacoraForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
-        # Obtenemos la 'clase' que pasamos desde la vista
-        clase = kwargs.pop('clase', None)
-        super().__init__(*args, **kwargs)
+        # Atrapamos el argumento 'clase' que viene de la vista
+        clase = kwargs.pop('clase', None) 
+        
+        # Llamamos al constructor padre (esta línea faltaba o era incorrecta)
+        super().__init__(*args, **kwargs) 
 
+        # Si recibimos la 'clase', filtramos el campo 'planificacion'
         if clase:
-            # Filtramos el <select> para que muestre SOLO
-            # las planificaciones de esta clase.
             self.fields['planificacion'].queryset = Planificacion.objects.filter(clase=clase)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        
+        # Aplicamos los estilos de Tailwind (esto ya lo tenías)
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
-            })
+            if field_name != 'competencias': # (este 'if' es de otro form, pero no hace daño)
+                field.widget.attrs.update({
+                    'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+                })
 
 class CargoForm(forms.ModelForm):
     class Meta:
