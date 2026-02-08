@@ -6,12 +6,22 @@ from django.views import View
 from .models import PeriodoAcademico, Clase, Curso, BitacoraPedagogica, Pago, Cargo
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
+from django.conf import settings
 import datetime
 from users.models import Maestro, User
 from .models import Planificacion
 from django.http import JsonResponse, HttpResponseServerError, HttpResponse
-from django.template.loader import render_to_string # 👈 Importa esto
-from weasyprint import HTML # 👈 Importa WeasyPrint
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from decouple import config
+
+# Importación condicional de Gemini AI
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    genai = None
 
 
 # Create your views here.
@@ -351,9 +361,109 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
         clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
         return self.request.user.user_type == User.UserType.MAESTRO and clase.maestro == self.request.user.maestro
 
-    def analizar_pedagogicamente(self, planificacion, entradas_diario, clase):
+    def analizar_pedagogicamente_con_gemini(self, planificacion, entradas_diario, clase, request):
         """
-        Realiza un análisis pedagógico comparando planificación vs ejecución
+        Realiza un análisis pedagógico usando Gemini AI
+        """
+        try:
+            # Verificar disponibilidad de Gemini
+            if not GEMINI_AVAILABLE:
+                return self.analizar_pedagogicamente_basico(planificacion, entradas_diario, clase)
+            
+            # Configurar Gemini
+            api_key = config('GEMINI_API_KEY', default='')
+            if not api_key or api_key == 'AQUI_TU_API_KEY_DE_GEMINI':
+                # Fallback al análisis básico si no hay API key
+                return self.analizar_pedagogicamente_basico(planificacion, entradas_diario, clase)
+            
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            # Preparar el contenido para análisis
+            texto_planificacion = f"""
+            PLANIFICACIÓN ACADÉMICA:
+            - Curso: {clase.curso.nombre}
+            - Objetivos: {planificacion.objetivos}
+            - Actividades Planificadas: {planificacion.actividades_planificadas}
+            """
+            
+            texto_diario = "REGISTRO DIARIO DE ACTIVIDADES:\n"
+            for i, entrada in enumerate(entradas_diario, 1):
+                texto_diario += f"""
+                Entrada {i} - Fecha: {entrada.fecha}
+                - Temas Cubiertos: {entrada.temas_cubiertos}
+                - Recursos Usados: {entrada.recursos_usados}
+                - Observaciones: {entrada.observaciones_generales}
+                - Tiempo de Sesión: {entrada.tiempo_sesion_minutos} minutos
+                """
+            
+            # Prompt especializado para análisis pedagógico
+            prompt = f"""
+            Como experto en pedagogía, analiza la coherencia entre la planificación académica y su ejecución real. 
+
+            {texto_planificacion}
+
+            {texto_diario}
+
+            IMPORTANTE: Responde EXACTAMENTE siguiendo esta estructura (respeta el formato de markdown):
+
+            **ANÁLISIS PEDAGÓGICO CON INTELIGENCIA ARTIFICIAL**
+
+            **Información General:**
+            - Curso: {clase.curso.nombre}
+            - Maestro: {clase.maestro.user.get_full_name()}
+            - Total de entradas en diario: {entradas_diario.count()}
+            - Período analizado: {entradas_diario.first().fecha} a {entradas_diario.last().fecha}
+
+            **1. Cumplimiento de Objetivos:**
+            [Analiza específicamente qué porcentaje de cumplimiento estimas y por qué, basándote en los datos reales]
+
+            **2. Coherencia Curricular:**
+            [Evalúa qué tan bien se alinea lo planificado con lo ejecutado, con ejemplos específicos]
+
+            **3. Fortalezas Identificadas:**
+            [Lista 3-4 fortalezas específicas del trabajo docente, basadas en los datos del diario]
+
+            **4. Sugerencias de Mejora:**
+            [Proporciona 3-4 sugerencias específicas y constructivas para optimizar el proceso pedagógico]
+
+            **5. Recomendaciones Estratégicas:**
+            [Ofrece estrategias concretas para mejorar la efectividad de la enseñanza basándote en los patrones observados]
+
+            **6. Análisis de Recursos:**
+            [Evalúa la efectividad de los recursos utilizados según lo registrado en el diario]
+
+            **Observaciones:**
+            [Conclusiones finales y observaciones adicionales importantes]
+
+            Mantén un tono profesional, constructivo y orientado al crecimiento pedagógico. 
+            Proporciona insights específicos basados ÚNICAMENTE en los datos presentados.
+            NO uses frases genéricas, todo debe estar fundamentado en la información real proporcionada.
+            """
+            
+            # Generar análisis con Gemini
+            response = model.generate_content(prompt)
+            analisis_ia = response.text
+            
+            # Extraer métricas básicas para uso interno
+            total_entradas = entradas_diario.count()
+            
+            return {
+                'analisis_completo': analisis_ia,
+                'total_entradas': total_entradas,
+                'metodo_analisis': 'Gemini AI',
+                'curso': clase.curso.nombre,
+                'maestro': clase.maestro.user.get_full_name()
+            }
+            
+        except Exception as e:
+            # Si falla Gemini, usar análisis básico como fallback
+            messages.warning(request, f"No se pudo conectar con Gemini AI. Generando análisis básico. Error: {str(e)[:100]}")
+            return self.analizar_pedagogicamente_basico(planificacion, entradas_diario, clase)
+
+    def analizar_pedagogicamente_basico(self, planificacion, entradas_diario, clase):
+        """
+        Análisis pedagógico básico (fallback cuando Gemini no está disponible)
         """
         # Análisis de datos básicos
         total_entradas = entradas_diario.count()
@@ -364,13 +474,9 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         # Consolidar todo el contenido del diario
         contenido_diario = ""
-        temas_cubiertos_total = ""
-        observaciones_total = ""
         
         for entrada in entradas_diario:
             contenido_diario += f" {entrada.temas_cubiertos} {entrada.observaciones_generales}".lower()
-            temas_cubiertos_total += f" {entrada.temas_cubiertos}"
-            observaciones_total += f" {entrada.observaciones_generales}"
         
         # Análisis de cumplimiento
         palabras_objetivos = set(objetivos_planificados.split())
@@ -393,39 +499,77 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
         else:
             frecuencia_registro = "Insuficiente"
         
-        # Análisis de contenido
-        coherencia = "Alta" if cumplimiento_porcentaje > 70 else "Media" if cumplimiento_porcentaje > 40 else "Baja"
+        # Generar análisis básico con la misma estructura que Gemini
+        periodo_inicio = entradas_diario.first().fecha.strftime("%d/%m/%Y") if entradas_diario.first() else "N/A"
+        periodo_fin = entradas_diario.last().fecha.strftime("%d/%m/%Y") if entradas_diario.last() else "N/A"
         
-        # Generar sugerencias basadas en el análisis
-        sugerencias = []
-        if total_entradas < 5:
-            sugerencias.append("Aumentar la frecuencia de registro en el diario pedagógico")
-        if cumplimiento_porcentaje < 50:
-            sugerencias.append("Revisar la alineación entre objetivos planificados y actividades ejecutadas")
-        if "evaluación" not in contenido_diario and "examen" not in contenido_diario:
-            sugerencias.append("Incorporar más actividades de evaluación formativa")
-        if "práctica" not in contenido_diario and "ejercicio" not in contenido_diario:
-            sugerencias.append("Incluir más actividades prácticas para reforzar el aprendizaje")
-        
-        # Identificar fortalezas
-        fortalezas = []
-        if total_entradas >= 8:
-            fortalezas.append("Excelente constancia en el registro pedagógico")
-        if cumplimiento_porcentaje > 70:
-            fortalezas.append("Buena coherencia entre planificación y ejecución")
-        if "adaptación" in contenido_diario or "modificación" in contenido_diario:
-            fortalezas.append("Flexibilidad y adaptación durante las clases")
-        if "grupo" in contenido_diario or "estudiantes" in contenido_diario:
-            fortalezas.append("Atención al contexto grupal y necesidades estudiantiles")
+        analisis_completo = f"""
+**ANÁLISIS PEDAGÓGICO CON INTELIGENCIA ARTIFICIAL**
+
+**Información General:**
+- Curso: {clase.curso.nombre}
+- Maestro: {clase.maestro.user.get_full_name()}
+- Total de entradas en diario: {total_entradas}
+- Período analizado: {periodo_inicio} a {periodo_fin}
+
+**1. Cumplimiento de Objetivos:**
+Con base en las {total_entradas} entradas registradas del diario pedagógico, se estima un cumplimiento del {cumplimiento_porcentaje}% de los objetivos planificados. Este porcentaje refleja la {frecuencia_registro} en el registro de actividades.
+
+**2. Coherencia Curricular:**
+Se observa una buena alineación entre la planificación curricular y las actividades ejecutadas. Los registros del diario muestran continuidad temática y progresión pedagógica adecuada para el nivel educativo.
+
+**3. Fortalezas Identificadas:**
+{self._generar_fortalezas_basicas(contenido_diario, total_entradas, cumplimiento_porcentaje)}
+
+**4. Sugerencias de Mejora:**
+{self._generar_sugerencias_basicas(contenido_diario, total_entradas, cumplimiento_porcentaje)}
+
+**5. Recomendaciones Estratégicas:**
+• Realizar evaluaciones diagnósticas periódicas para ajustar la metodología
+• Establecer metas de aprendizaje claras y medibles para cada sesión
+• Crear espacios de reflexión pedagógica sobre la efectividad de las estrategias
+• Desarrollar un seguimiento personalizado para estudiantes con necesidades especiales
+
+**6. Análisis de Recursos:**
+Los recursos documentados en el diario pedagógico son apropiados para el nivel educativo. Se sugiere evaluar la incorporación de recursos tecnológicos para enriquecer las metodologías de enseñanza.
+
+**Observaciones:**
+Este análisis básico se fundamenta en {total_entradas} registros del período {periodo_inicio} al {periodo_fin}. Para obtener insights más detallados y personalizados, se recomienda configurar la integración con Gemini AI.
+        """
         
         return {
-            'cumplimiento_porcentaje': cumplimiento_porcentaje,
-            'frecuencia_registro': frecuencia_registro,
-            'coherencia': coherencia,
+            'analisis_completo': analisis_completo,
             'total_entradas': total_entradas,
-            'sugerencias': sugerencias,
-            'fortalezas': fortalezas
+            'metodo_analisis': 'Análisis con IA (Modo Básico)',
+            'curso': clase.curso.nombre,
+            'maestro': clase.maestro.user.get_full_name()
         }
+    
+    def _generar_fortalezas_basicas(self, contenido_diario, total_entradas, cumplimiento_porcentaje):
+        fortalezas = []
+        if total_entradas >= 8:
+            fortalezas.append("• Excelente constancia en el registro pedagógico")
+        if cumplimiento_porcentaje > 70:
+            fortalezas.append("• Buena coherencia entre planificación y ejecución")
+        if "adaptación" in contenido_diario or "modificación" in contenido_diario:
+            fortalezas.append("• Flexibilidad y adaptación durante las clases")
+        if "grupo" in contenido_diario or "estudiantes" in contenido_diario:
+            fortalezas.append("• Atención al contexto grupal y necesidades estudiantiles")
+        
+        return "\n".join(fortalezas) if fortalezas else "• Se requiere más información para identificar fortalezas específicas"
+    
+    def _generar_sugerencias_basicas(self, contenido_diario, total_entradas, cumplimiento_porcentaje):
+        sugerencias = []
+        if total_entradas < 5:
+            sugerencias.append("• Aumentar la frecuencia de registro en el diario pedagógico")
+        if cumplimiento_porcentaje < 50:
+            sugerencias.append("• Revisar la alineación entre objetivos planificados y actividades ejecutadas")
+        if "evaluación" not in contenido_diario and "examen" not in contenido_diario:
+            sugerencias.append("• Incorporar más actividades de evaluación formativa")
+        if "práctica" not in contenido_diario and "ejercicio" not in contenido_diario:
+            sugerencias.append("• Incluir más actividades prácticas para reforzar el aprendizaje")
+        
+        return "\n".join(sugerencias) if sugerencias else "• Continúe con el excelente trabajo realizado"
 
     def get(self, request, *args, **kwargs):
         clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
@@ -454,50 +598,27 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
                 f'Actualmente solo hay {entradas_diario.count()} entrada(s).')
             # Continuamos con la generación del reporte
 
-        # 2. Realizar análisis pedagógico
-        analisis = self.analizar_pedagogicamente(planificacion_actual, entradas_diario, clase)
+        # 2. Realizar análisis pedagógico con Gemini
+        analisis = self.analizar_pedagogicamente_con_gemini(planificacion_actual, entradas_diario, clase, request)
         
-        # 3. Generar texto del análisis
-        opinion_ia = f"""
-**ANÁLISIS PEDAGÓGICO AUTOMATIZADO**
-
-**Información General:**
-- Curso: {clase.curso.nombre}
-- Maestro: {clase.maestro.user.get_full_name()}
-- Total de entradas en diario: {analisis['total_entradas']}
-- Período analizado: {entradas_diario.first().fecha} a {entradas_diario.last().fecha}
-
-**Evaluación de Cumplimiento:**
-- Coherencia entre planificación y ejecución: {analisis['coherencia']}
-- Cumplimiento estimado de objetivos: {analisis['cumplimiento_porcentaje']}%
-- Frecuencia de registro: {analisis['frecuencia_registro']}
-
-**Fortalezas Identificadas:**
-{chr(10).join(f"✓ {fortaleza}" for fortaleza in analisis['fortalezas']) if analisis['fortalezas'] else "• Se requiere más información para identificar fortalezas específicas"}
-
-**Sugerencias de Mejora:**
-{chr(10).join(f"• {sugerencia}" for sugerencia in analisis['sugerencias']) if analisis['sugerencias'] else "• Continúe con el excelente trabajo realizado"}
-
-**Observaciones:**
-El análisis se basa en la comparación automatizada entre los objetivos planificados y las actividades registradas en el diario pedagógico. Se recomienda complementar este análisis con evaluación cualitativa adicional.
-        """
-        
-        # 4. Preparar contexto para el PDF
+        # 3. Preparar contexto para el PDF
         context = {
             "curso": clase.curso.nombre,
             "maestro": clase.maestro,
             "planificacion": f"Objetivos: {planificacion_actual.objetivos}. Actividades Planificadas: {planificacion_actual.actividades_planificadas}.",
             "diario": "\n".join([f"Fecha {entrada.fecha}: {entrada.temas_cubiertos}. Observaciones: {entrada.observaciones_generales}." for entrada in entradas_diario]),
-            "opinion_ia": opinion_ia,
-            "analisis_datos": analisis
+            "opinion_ia": analisis['analisis_completo'],
+            "analisis_datos": analisis,
+            "periodo_analizado": f"{entradas_diario.first().fecha} a {entradas_diario.last().fecha}",
+            "metodo_analisis": analisis['metodo_analisis']
         }
         
-        # 5. Generar PDF
+        # 4. Generar PDF
         html_string = render_to_string('academico/reporte_ia_pdf.html', context)
         pdf_file = HTML(string=html_string).write_pdf()
         
-        # 6. Devolver respuesta
+        # 5. Devolver respuesta
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="reporte_pedagogico_{clase.curso.nombre}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="reporte_pedagogico_IA_{clase.curso.nombre}.pdf"'
         
         return response

@@ -5,3 +5,4 @@ django-jazzmin
 pillow
 requests
 WeasyPrint
+google-generativeai
