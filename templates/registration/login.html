@@ -7,65 +7,222 @@
     <title>Iniciar Sesión - Edutech</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1f3750 0%, #2D4C6B 50%, #1f3750 100%);
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: moveBackground 30s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes moveBackground {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+        
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 480px;
+            width: 100%;
+        }
+        
+        .logo-circle {
+            background: linear-gradient(135deg, #2D4C6B 0%, #1f3750 100%);
+            box-shadow: 0 10px 30px rgba(45, 76, 107, 0.4);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(45, 76, 107, 0.2);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #2D4C6B 0%, #1f3750 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        .floating-shape {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            animation: float 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        
+        .shape-1 { width: 60px; height: 60px; top: 15%; left: 5%; animation-delay: 0s; }
+        .shape-2 { width: 45px; height: 45px; top: 65%; left: 85%; animation-delay: 2s; }
+        .shape-3 { width: 75px; height: 75px; top: 40%; right: 8%; animation-delay: 4s; }
+        
+        .container-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 font-sans flex items-center justify-center min-h-screen">
+<body>
     
-    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">
-            Iniciar Sesión
-        </h1>
-        
-        {% if form.errors %}
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                <p class="font-bold">Error:</p>
-                <p>Tu usuario y contraseña no coinciden. Inténtalo de nuevo.</p>
-            </div>
-        {% endif %}
-
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="space-y-4">
-                
-                <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Usuario
-                    </label>
-                    <input 
-                        type="text" 
-                        name="{{ form.username.name }}" 
-                        id="{{ form.username.id_for_label }}" 
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" 
-                        required 
-                        autofocus>
-                    {% if form.username.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.username.errors|first }}</p>
-                    {% endif %}
+    <!-- Floating Shapes -->
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    <div class="floating-shape shape-3"></div>
+    
+    <div class="container-wrapper">
+        <div class="w-full relative z-10" style="max-width: 480px;">
+            <!-- Logo y Header -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 logo-circle rounded-2xl mb-4">
+                    <i class="fas fa-graduation-cap text-white text-3xl"></i>
                 </div>
-
-                <div>
-                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Contraseña
-                    </label>
-                    <input 
-                        type="password" 
-                        name="{{ form.password.name }}" 
-                        id="{{ form.password.id_for_label }}" 
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" 
-                        required>
-                    {% if form.password.errors %}
-                        <p class="text-red-500 text-xs mt-1">{{ form.password.errors|first }}</p>
-                    {% endif %}
-                </div>
-
+                <h1 class="text-3xl font-bold text-white mb-2 drop-shadow-lg">
+                    Edutech Sistema
+                </h1>
+                <p class="text-white text-opacity-90 text-sm">Plataforma Educativa Integral</p>
             </div>
             
-            <div class="mt-6">
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Entrar
-                </button>
+            <!-- Form Card -->
+            <div class="login-card rounded-2xl p-6 border border-white border-opacity-20">
+                <div class="mb-5">
+                    <h2 class="text-xl font-bold text-gray-800 mb-1">Iniciar Sesión</h2>
+                    <p class="text-gray-600 text-sm">Ingresa tus credenciales para continuar</p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 mb-5 rounded-lg" role="alert">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-lg mr-2"></i>
+                            <div>
+                                <p class="font-semibold text-sm">Error de autenticación</p>
+                                <p class="text-xs">Usuario o contraseña incorrectos</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-user text-gray-400 mr-1"></i> Usuario
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                name="{{ form.username.name }}" 
+                                id="{{ form.username.id_for_label }}" 
+                                class="input-field w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all duration-200" 
+                                placeholder="Ingresa tu nombre de usuario"
+                                required 
+                                autofocus
+                                style="background: rgba(249, 250, 251, 0.5);">
+                            <i class="fas fa-user-circle absolute left-3 top-3 text-gray-400 text-lg"></i>
+                        </div>
+                        {% if form.username.errors %}
+                            <p class="text-red-500 text-xs mt-1 ml-1">{{ form.username.errors|first }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-lock text-gray-400 mr-1"></i> Contraseña
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                name="{{ form.password.name }}" 
+                                id="{{ form.password.id_for_label }}" 
+                                class="input-field w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all duration-200"
+                                placeholder="Ingresa tu contraseña"
+                                required
+                                style="background: rgba(249, 250, 251, 0.5);">
+                            <i class="fas fa-key absolute left-3 top-3 text-gray-400 text-lg"></i>
+                        </div>
+                        {% if form.password.errors %}
+                            <p class="text-red-500 text-xs mt-1 ml-1">{{ form.password.errors|first }}</p>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn-login w-full text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 mt-2">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Iniciar Sesión
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <a href="#" class="text-sm font-medium inline-flex items-center" style="color: #2D4C6B;">
+                        <i class="fas fa-question-circle mr-1"></i> ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-center text-xs text-gray-500">
+                        <i class="fas fa-shield-alt mr-1"></i> Conexión segura y encriptada
+                    </p>
+                </div>
             </div>
-        </form>
+            
+            <!-- Footer -->
+            <p class="text-center text-xs text-white text-opacity-80 mt-4">
+                &copy; {% now "Y" %} Sistema Edutech. Todos los derechos reservados.
+            </p>
+        </div>
     </div>
 
 </body>

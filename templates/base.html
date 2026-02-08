@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,79 +7,167 @@
     <title>{% block title %}Sistema de Edutech{% endblock title %}</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --color-primary: #2D4C6B;
+            --color-primary-dark: #1f3750;
+            --color-primary-light: #e8eef4;
+            --color-accent: #9B111E;
+            --color-accent-light: #fef2f2;
+            --color-neutral: #F2F3F4;
+            --color-neutral-border: #C7C7C7;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #F2F3F4 0%, #e8eef4 100%) !important;
+        }
+        
+        .nav-logo {
+            background: linear-gradient(to right, #2D4C6B, #1f3750) !important;
+        }
+        
+        .text-primary-color {
+            color: #2D4C6B !important;
+        }
+        
+        .bg-primary-grad {
+            background: linear-gradient(to right, #2D4C6B, #1f3750) !important;
+        }
+        
+        .btn-primary-grad {
+            background: linear-gradient(to right, #2D4C6B, #1f3750) !important;
+            color: white !important;
+        }
+        
+        .hover-primary:hover {
+            background-color: #e8eef4 !important;
+            color: #2D4C6B !important;
+        }
+        
+        .hover-accent:hover {
+            background-color: #fef2f2 !important;
+            color: #9B111E !important;
+        }
+        
+        .border-neutral-color {
+            border-color: #C7C7C7 !important;
+        }
+        
+        .focus-primary:focus {
+            outline: none !important;
+            border-color: #2D4C6B !important;
+            box-shadow: 0 0 0 3px rgba(45, 76, 107, 0.1) !important;
+        }
+    </style>
     
     {% block styles %}{% endblock styles %}
 </head>
 
-<body class="bg-gray-100 font-sans">
-    <nav class="bg-gray-800 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4">
+<body style="background: linear-gradient(135deg, #F2F3F4 0%, #e8eef4 100%); min-height: 100vh;" class="font-sans antialiased h-full flex flex-col">
+    <nav class="shadow-sm sticky top-0 z-50" style="background-color: white; border-bottom: 2px solid #C7C7C7;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 
-                <div class="flex-shrink-0">
-                    <a href="" class="text-white text-2xl font-bold">🎓 Edutech</a>
-                </div>
-
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        
-                        {% if user.is_authenticated %}
-                            
-                            {% if user.user_type == 'ADMIN' %}
-                                <a href="{% url 'admin:index' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Panel Admin</a>
-                                <a href="{% url 'maestro_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Maestros</a>
-                                <a href="{% url 'estudiante_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Estudiantes</a>
-                                <a href="{% url 'curso_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Cursos</a>
-                                <a href="{% url 'periodo_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Periodos</a>
-                                <a href="{% url 'cargo_list' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Cargos</a>
-
-                            {% elif user.user_type == 'MAESTRO' %}
-                                <a href="{% url 'portal_maestro' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Portal</a>
-
-                            {% elif user.user_type == 'ESTUDIANTE' %}
-                                <a href="{% url 'portal_estudiante' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Portal</a>
-                                <a href="{% url 'mis_calificaciones' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mis Notas</a>
-                                <a href="{% url 'boleta_estudiante' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Boleta</a>
-                                <a href="{% url 'horario' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Horario</a>
-
-                            {% elif user.user_type == 'PADRE' %}
-                                <a href="{% url 'portal_padre' %}" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Mi Portal</a>
-                            {% endif %}
-
-                        {% endif %}
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 rounded-lg nav-logo">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
+                    <a href="" class="text-2xl font-bold text-primary-color">
+                        Edutech
+                    </a>
                 </div>
 
-                <div class="hidden md:block">
-                    <div class="ml-4 flex items-center md:ml-6 space-x-4">
+                <div class="hidden md:flex items-center space-x-1">
+                    {% if user.is_authenticated %}
                         
-                        {% if user.is_authenticated and user.user_type != 'ADMIN' %}
-                        <form action="{% url 'cambiar_periodo' %}" method="POST" class="flex items-center">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.path }}">
-                            <label for="periodo_select" class="text-sm font-medium text-gray-300 mr-2">Periodo:</label>
-                            <select name="periodo_id" id="periodo_select" 
-                                    onchange="this.form.submit()" 
-                                    class="bg-gray-700 text-white text-sm rounded-md border-gray-600 focus:ring-indigo-500 focus:border-indigo-500 py-1">
-                                
-                                {% for periodo in lista_todos_periodos %}
-                                    <option value="{{ periodo.pk }}" {% if periodo.pk == periodo_seleccionado_id %}selected{% endif %}>
-                                        {{ periodo.nombre }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </form>
+                        {% if user.user_type == 'ADMIN' %}
+                            <a href="{% url 'admin:index' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-tools mr-1"></i> Panel Admin
+                            </a>
+                            <a href="{% url 'maestro_list' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-chalkboard-teacher mr-1"></i> Maestros
+                            </a>
+                            <a href="{% url 'estudiante_list' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-user-graduate mr-1"></i> Estudiantes
+                            </a>
+                            <a href="{% url 'curso_list' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-book mr-1"></i> Cursos
+                            </a>
+                            <a href="{% url 'periodo_list' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-calendar-alt mr-1"></i> Periodos
+                            </a>
+                            <a href="{% url 'cargo_list' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-dollar-sign mr-1"></i> Cargos
+                            </a>
+
+                        {% elif user.user_type == 'MAESTRO' %}
+                            <a href="{% url 'portal_maestro' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-home mr-1"></i> Mi Portal
+                            </a>
+
+                        {% elif user.user_type == 'ESTUDIANTE' %}
+                            <a href="{% url 'portal_estudiante' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-home mr-1"></i> Mi Portal
+                            </a>
+                            <a href="{% url 'mis_calificaciones' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-star mr-1"></i> Mis Notas
+                            </a>
+                            <a href="{% url 'boleta_estudiante' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-file-alt mr-1"></i> Mi Boleta
+                            </a>
+                            <a href="{% url 'horario' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-clock mr-1"></i> Horario
+                            </a>
+
+                        {% elif user.user_type == 'PADRE' %}
+                            <a href="{% url 'portal_padre' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                <i class="fas fa-home mr-1"></i> Mi Portal
+                            </a>
                         {% endif %}
 
-                        {% if user.is_authenticated %}
+                    {% endif %}
+                </div>
+
+                <div class="hidden md:flex items-center space-x-3">
+                    
+                    {% if user.is_authenticated and user.user_type != 'ADMIN' %}
+                    <form action="{% url 'cambiar_periodo' %}" method="POST" class="flex items-center rounded-lg px-3 py-2" style="background-color: #F2F3F4; border: 1px solid #C7C7C7;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <label for="periodo_select" class="text-xs font-medium text-gray-600 mr-2">
+                            <i class="fas fa-calendar mr-1"></i> Periodo:
+                        </label>
+                        <select name="periodo_id" id="periodo_select" 
+                                onchange="this.form.submit()" 
+                                class="bg-transparent text-gray-800 text-sm font-medium border-none focus:ring-0 py-0 pr-8 cursor-pointer">
+                            {% for periodo in lista_todos_periodos %}
+                                <option value="{{ periodo.pk }}" {% if periodo.pk == periodo_seleccionado_id %}selected{% endif %}>
+                                    {{ periodo.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <div class="flex items-center space-x-3 border-l border-gray-200 pl-3">
+                            <div class="text-right hidden lg:block">
+                                <p class="text-sm font-medium text-gray-800">{{ user.get_full_name }}</p>
+                                <p class="text-xs text-gray-500">{{ user.get_user_type_display }}</p>
+                            </div>
+                            <div class="text-white w-10 h-10 rounded-full flex items-center justify-center font-bold bg-primary-grad">
+                                {{ user.first_name|first }}{{ user.last_name|first }}
+                            </div>
                             <form action="{% url 'logout' %}" method="post" class="inline">
                                 {% csrf_token %}
-                                <button type="submit" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                                    Cerrar Sesión 🚪
+                                <button type="submit" class="text-gray-600 hover-accent p-2 rounded-lg transition-all duration-200" title="Cerrar Sesión">
+                                    <i class="fas fa-sign-out-alt"></i>
                                 </button>
                             </form>
-                        {% endif %}
-                    </div>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="-mr-2 flex md:hidden">
@@ -88,18 +176,24 @@
         </div>
     </nav>
     
-    <main class="py-10">
-        <div class="max-w-7xl mx-auto h-dvh px-4 sm:px-6 lg:px-8 max-h-screen overflow-y-auto">
+    <main class="flex-1 py-6 overflow-y-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {% block content %}
             {% endblock content %}
         </div>
     </main>
 
-    <footer class="bg-gray-800 mt-auto">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-sm text-gray-400">
-                &copy; {% now "Y" %} Sistema de Edutech. Todos los derechos reservados.
-            </p>
+    <footer class="bg-white border-t border-gray-200 mt-auto flex-shrink-0">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-gray-500">
+                    &copy; {% now "Y" %} Sistema Edutech. Todos los derechos reservados.
+                </p>
+                <div class="flex space-x-4 text-sm text-gray-500">
+                    <a href="#" class="hover:text-blue-600 transition-colors">Ayuda</a>
+                    <a href="#" class="hover:text-blue-600 transition-colors">Soporte</a>
+                </div>
+            </div>
         </div>
     </footer>
 

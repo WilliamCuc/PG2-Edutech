@@ -1,17 +1,166 @@
 {% extends 'base.html' %}
 {% block title %}Crear Nueva Actividad{% endblock %}
 {% block content %}
-<div class="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Crear Nueva Actividad</h1>
-    <form method="post"enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="space-y-4">{{ form.as_p }}</div>
-        <div class="mt-6 flex items-center gap-4">
-            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                Guardar Actividad
-            </button>
-            <a href="{% url 'portal_maestro' %}" class="text-gray-600 hover:text-gray-900">Cancelar</a>
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                Crear Nueva Actividad
+            </h1>
+            <p class="text-gray-500 ml-16">Define una nueva tarea para tus estudiantes</p>
         </div>
-    </form>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="space-y-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700">
+                        {% if 'titulo' in field.name %}
+                            <i class="fas fa-heading text-gray-400 mr-1"></i>
+                        {% elif 'descripcion' in field.name %}
+                            <i class="fas fa-align-left text-gray-400 mr-1"></i>
+                        {% elif 'fecha' in field.name %}
+                            <i class="fas fa-calendar text-gray-400 mr-1"></i>
+                        {% elif 'tipo' in field.name %}
+                            <i class="fas fa-tag text-gray-400 mr-1"></i>
+                        {% elif 'archivo' in field.name or 'adjunto' in field.name %}
+                            <i class="fas fa-paperclip text-gray-400 mr-1"></i>
+                        {% elif 'punto' in field.name or 'calificacion' in field.name %}
+                            <i class="fas fa-star text-gray-400 mr-1"></i>
+                        {% else %}
+                            <i class="fas fa-edit text-gray-400 mr-1"></i>
+                        {% endif %}
+                        {{ field.label }}
+                    </label>
+                    
+                    {% if field.field.widget.input_type == 'file' %}
+                        <div class="relative">
+                            {{ field }}
+                            <style>
+                                #{{ field.id_for_label }} {
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    border: 2px dashed #d1d5db;
+                                    border-radius: 12px;
+                                    font-size: 14px;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                }
+                                #{{ field.id_for_label }}:hover {
+                                    border-color: #3b82f6;
+                                    background-color: #eff6ff;
+                                }
+                            </style>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i> Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, imágenes
+                            </p>
+                        </div>
+                    {% elif field.field.widget.input_type == 'textarea' %}
+                        {{ field }}
+                        <style>
+                            #{{ field.id_for_label }} {
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 12px;
+                                min-height: 150px;
+                                font-size: 14px;
+                                transition: all 0.2s;
+                            }
+                            #{{ field.id_for_label }}:focus {
+                                outline: none;
+                                ring: 2px;
+                                ring-color: #3b82f6;
+                                border-color: transparent;
+                            }
+                        </style>
+                    {% elif field.field.widget.input_type == 'select' %}
+                        {{ field }}
+                        <style>
+                            #{{ field.id_for_label }} {
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 12px;
+                                font-size: 14px;
+                                background-color: white;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            }
+                            #{{ field.id_for_label }}:focus {
+                                outline: none;
+                                ring: 2px;
+                                ring-color: #3b82f6;
+                                border-color: transparent;
+                            }
+                        </style>
+                    {% elif field.field.widget.input_type == 'datetime-local' %}
+                        {{ field }}
+                        <style>
+                            #{{ field.id_for_label }} {
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 12px;
+                                font-size: 14px;
+                                transition: all 0.2s;
+                            }
+                            #{{ field.id_for_label }}:focus {
+                                outline: none;
+                                ring: 2px;
+                                ring-color: #3b82f6;
+                                border-color: transparent;
+                            }
+                        </style>
+                    {% else %}
+                        {{ field }}
+                        <style>
+                            #{{ field.id_for_label }} {
+                                width: 100%;
+                                padding: 12px 16px;
+                                border: 1px solid #d1d5db;
+                                border-radius: 12px;
+                                font-size: 14px;
+                                transition: all 0.2s;
+                            }
+                            #{{ field.id_for_label }}:focus {
+                                outline: none;
+                                ring: 2px;
+                                ring-color: #3b82f6;
+                                border-color: transparent;
+                            }
+                        </style>
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                    
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <p class="text-red-600 text-sm mt-1 flex items-center">
+                                <i class="fas fa-exclamation-circle mr-1"></i> {{ error }}
+                            </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+                <button type="submit" 
+                        class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i> Guardar Actividad
+                </button>
+                <a href="{% url 'portal_maestro' %}" 
+                   class="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

@@ -5,27 +5,38 @@
 {% endblock title %}
 
 {% block content %}
-    <div class="bg-white p-8 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Gestión de Cursos</h1>
-            <a href="{% url 'curso_create' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
+    <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    Gestión de Cursos
+                </h1>
+                <p class="text-gray-500 mt-2">Administra todos los cursos del sistema</p>
+            </div>
+            <a href="{% url 'curso_create' %}" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center">
+                <i class="fas fa-plus mr-2"></i>
                 Nuevo Curso
             </a>
         </div>
 
         <!-- Filtros y búsqueda -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-md">
+        <div class="mb-8 bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border border-gray-200">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar curso</label>
-                    <input type="text" id="search-input" placeholder="Nombre o código..." class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-search mr-1 text-gray-400"></i> Buscar curso
+                    </label>
+                    <input type="text" id="search-input" placeholder="Nombre o código..." 
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Ordenar por</label>
-                    <select id="sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-sort mr-1 text-gray-400"></i> Ordenar por
+                    </label>
+                    <select id="sort-select" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         <option value="nombre">Nombre (A-Z)</option>
                         <option value="-nombre">Nombre (Z-A)</option>
                         <option value="codigo">Código</option>
@@ -34,8 +45,8 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button id="filter-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md w-full">
-                        Aplicar Filtros
+                    <button id="filter-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl w-full font-semibold shadow-md hover:shadow-lg transition-all duration-200">
+                        <i class="fas fa-filter mr-2"></i> Aplicar Filtros
                     </button>
                 </div>
             </div>
@@ -43,51 +54,51 @@
 
         <div id="cursos-container">
             {% if lista_de_cursos %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white rounded-lg overflow-hidden">
-                        <thead class="bg-gray-100 text-gray-600">
+                <div class="overflow-hidden rounded-xl border border-gray-200">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
                             <tr>
-                                <th class="py-3 px-4 text-left text-sm font-semibold uppercase">Código</th>
-                                <th class="py-3 px-4 text-left text-sm font-semibold uppercase">Nombre</th>
-                                <th class="py-3 px-4 text-left text-sm font-semibold uppercase">Créditos</th>
-                                <th class="py-3 px-4 text-left text-sm font-semibold uppercase">Descripción</th>
-                                <th class="py-3 px-4 text-left text-sm font-semibold uppercase">Acciones</th>
+                                <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Código</th>
+                                <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Nombre</th>
+                                <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Créditos</th>
+                                <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Descripción</th>
+                                <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="text-gray-700">
+                        <tbody class="text-gray-700 divide-y divide-gray-100">
                             {% for curso in lista_de_cursos %}
-                                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                    <td class="py-3 px-4 font-mono">{{ curso.codigo }}</td>
-                                    <td class="py-3 px-4 font-medium">{{ curso.nombre }}</td>
-                                    <td class="py-3 px-4">
-                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                            {{ curso.creditos }} crédito{{ curso.creditos|pluralize }}
+                                <tr class="hover:bg-blue-50 transition-colors duration-150">
+                                    <td class="py-4 px-6 font-mono font-semibold text-blue-600">{{ curso.codigo }}</td>
+                                    <td class="py-4 px-6 font-semibold text-gray-800">{{ curso.nombre }}</td>
+                                    <td class="py-4 px-6">
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                                            <i class="fas fa-certificate mr-1"></i> {{ curso.creditos }} crédito{{ curso.creditos|pluralize }}
                                         </span>
                                     </td>
-                                    <td class="py-3 px-4">
-                                        <div class="max-w-xs truncate" title="{{ curso.descripcion|default:'Sin descripción' }}">
-                                            {{ curso.descripcion|default:"Sin descripción"|truncatewords:10 }}
+                                    <td class="py-4 px-6">
+                                        <div class="max-w-xs text-sm text-gray-600" title="{{ curso.descripcion|default:'Sin descripción' }}">
+                                            {{ curso.descripcion|default:"Sin descripción"|truncatewords:8 }}
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td class="py-4 px-6">
                                         <div class="flex space-x-2">
-                                            <a href="{% url 'curso_update' curso.id %}" class="text-blue-500 hover:text-blue-700 p-1 rounded" title="Editar">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                </svg>
+                                            <a href="{% url 'curso_update' curso.id %}" 
+                                               class="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-all duration-200" 
+                                               title="Editar">
+                                                <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{% url 'curso_update' curso.id %}" class="text-green-500 hover:text-green-700 p-1 rounded" title="Ver detalles">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
+                                            <a href="{% url 'curso_update' curso.id %}" 
+                                               class="text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 p-2 rounded-lg transition-all duration-200" 
+                                               title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
                                             </a>
                                             <form action="{% url 'curso_delete' curso.id %}" method="post" class="inline">
                                                 {% csrf_token %}
-                                                <button type="submit" onclick="return confirm('¿Estás seguro de que deseas eliminar este curso?')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Eliminar">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
+                                                <button type="submit" 
+                                                        onclick="return confirm('¿Estás seguro de que deseas eliminar este curso?')" 
+                                                        class="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-all duration-200" 
+                                                        title="Eliminar">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -101,41 +112,42 @@
                 <!-- Paginación -->
                 {% if is_paginated %}
                 <div class="mt-6 flex justify-between items-center">
-                    <div class="text-sm text-gray-700">
-                        Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} cursos
+                    <div class="text-sm text-gray-600">
+                        Mostrando <span class="font-semibold">{{ page_obj.start_index }}</span> - 
+                        <span class="font-semibold">{{ page_obj.end_index }}</span> de 
+                        <span class="font-semibold">{{ page_obj.paginator.count }}</span> cursos
                     </div>
                     <div class="flex space-x-2">
                         {% if page_obj.has_previous %}
-                            <a href="?page=1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100">Primera</a>
-                            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100">Anterior</a>
+                            <a href="?page=1" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors duration-200">Primera</a>
+                            <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors duration-200">Anterior</a>
                         {% endif %}
 
                         {% for num in page_obj.paginator.page_range %}
                             {% if page_obj.number == num %}
-                                <span class="px-3 py-1 border border-blue-500 bg-blue-500 text-white rounded-md">{{ num }}</span>
+                                <span class="px-4 py-2 border-2 border-blue-500 bg-blue-500 text-white rounded-lg font-semibold">{{ num }}</span>
                             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100">{{ num }}</a>
+                                <a href="?page={{ num }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors duration-200">{{ num }}</a>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100">Siguiente</a>
-                            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100">Última</a>
+                            <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors duration-200">Siguiente</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition-colors duration-200">Última</a>
                         {% endif %}
                     </div>
                 </div>
                 {% endif %}
             {% else %}
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6"></path>
-                    </svg>
-                    <h3 class="mt-2 text-lg font-medium text-gray-900">No hay cursos registrados</h3>
-                    <p class="mt-1 text-sm text-gray-500">Comienza agregando un nuevo curso al sistema.</p>
+                <div class="text-center py-16">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                        <i class="fas fa-book text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="mt-4 text-xl font-bold text-gray-900">No hay cursos registrados</h3>
+                    <p class="mt-2 text-sm text-gray-500">Comienza agregando un nuevo curso al sistema.</p>
                     <div class="mt-6">
-                        <a href="{% url 'curso_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Crear primer curso
+                        <a href="{% url 'curso_create' %}" class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-md text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transform hover:-translate-y-0.5 transition-all duration-200">
+                            <i class="fas fa-plus mr-2"></i> Crear primer curso
                         </a>
                     </div>
                 </div>
@@ -147,18 +159,11 @@
 {% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Funcionalidad de búsqueda y filtrado
             const searchInput = document.getElementById('search-input');
             const sortSelect = document.getElementById('sort-select');
             const filterBtn = document.getElementById('filter-btn');
             
             filterBtn.addEventListener('click', function() {
-                // Aquí implementarías la lógica para filtrar y ordenar
-                // Podría ser una llamada AJAX o redirección con parámetros
-                console.log('Filtrando con:', searchInput.value);
-                console.log('Ordenando por:', sortSelect.value);
-                
-                // Ejemplo de redirección con parámetros (ajusta según tus URLs)
                 const params = new URLSearchParams();
                 if (searchInput.value) params.append('search', searchInput.value);
                 if (sortSelect.value) params.append('sort', sortSelect.value);
@@ -166,7 +171,6 @@
                 window.location.href = window.location.pathname + '?' + params.toString();
             });
             
-            // Permitir búsqueda con Enter
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     filterBtn.click();
