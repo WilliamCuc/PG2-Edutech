@@ -5,10 +5,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from .models import PeriodoAcademico, Clase, Curso, BitacoraPedagogica, Pago, Cargo
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
 import datetime
 from users.models import Maestro, User
 from .models import Planificacion
-import requests
 from django.http import JsonResponse, HttpResponseServerError, HttpResponse
 from django.template.loader import render_to_string # 👈 Importa esto
 from weasyprint import HTML # 👈 Importa WeasyPrint
@@ -351,71 +351,153 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
         clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
         return self.request.user.user_type == User.UserType.MAESTRO and clase.maestro == self.request.user.maestro
 
+    def analizar_pedagogicamente(self, planificacion, entradas_diario, clase):
+        """
+        Realiza un análisis pedagógico comparando planificación vs ejecución
+        """
+        # Análisis de datos básicos
+        total_entradas = entradas_diario.count()
+        
+        # Extraer palabras clave de los objetivos planificados
+        objetivos_planificados = planificacion.objetivos.lower() if planificacion.objetivos else ""
+        actividades_planificadas = planificacion.actividades_planificadas.lower() if planificacion.actividades_planificadas else ""
+        
+        # Consolidar todo el contenido del diario
+        contenido_diario = ""
+        temas_cubiertos_total = ""
+        observaciones_total = ""
+        
+        for entrada in entradas_diario:
+            contenido_diario += f" {entrada.temas_cubiertos} {entrada.observaciones_generales}".lower()
+            temas_cubiertos_total += f" {entrada.temas_cubiertos}"
+            observaciones_total += f" {entrada.observaciones_generales}"
+        
+        # Análisis de cumplimiento
+        palabras_objetivos = set(objetivos_planificados.split())
+        palabras_diario = set(contenido_diario.split())
+        palabras_comunes = palabras_objetivos.intersection(palabras_diario)
+        
+        # Calcular porcentaje de cumplimiento aproximado
+        if len(palabras_objetivos) > 0:
+            cumplimiento_porcentaje = min(100, int((len(palabras_comunes) / len(palabras_objetivos)) * 100))
+        else:
+            cumplimiento_porcentaje = 0
+        
+        # Evaluar frecuencia de registro
+        if total_entradas >= 10:
+            frecuencia_registro = "Excelente"
+        elif total_entradas >= 5:
+            frecuencia_registro = "Buena"
+        elif total_entradas >= 2:
+            frecuencia_registro = "Regular"
+        else:
+            frecuencia_registro = "Insuficiente"
+        
+        # Análisis de contenido
+        coherencia = "Alta" if cumplimiento_porcentaje > 70 else "Media" if cumplimiento_porcentaje > 40 else "Baja"
+        
+        # Generar sugerencias basadas en el análisis
+        sugerencias = []
+        if total_entradas < 5:
+            sugerencias.append("Aumentar la frecuencia de registro en el diario pedagógico")
+        if cumplimiento_porcentaje < 50:
+            sugerencias.append("Revisar la alineación entre objetivos planificados y actividades ejecutadas")
+        if "evaluación" not in contenido_diario and "examen" not in contenido_diario:
+            sugerencias.append("Incorporar más actividades de evaluación formativa")
+        if "práctica" not in contenido_diario and "ejercicio" not in contenido_diario:
+            sugerencias.append("Incluir más actividades prácticas para reforzar el aprendizaje")
+        
+        # Identificar fortalezas
+        fortalezas = []
+        if total_entradas >= 8:
+            fortalezas.append("Excelente constancia en el registro pedagógico")
+        if cumplimiento_porcentaje > 70:
+            fortalezas.append("Buena coherencia entre planificación y ejecución")
+        if "adaptación" in contenido_diario or "modificación" in contenido_diario:
+            fortalezas.append("Flexibilidad y adaptación durante las clases")
+        if "grupo" in contenido_diario or "estudiantes" in contenido_diario:
+            fortalezas.append("Atención al contexto grupal y necesidades estudiantiles")
+        
+        return {
+            'cumplimiento_porcentaje': cumplimiento_porcentaje,
+            'frecuencia_registro': frecuencia_registro,
+            'coherencia': coherencia,
+            'total_entradas': total_entradas,
+            'sugerencias': sugerencias,
+            'fortalezas': fortalezas
+        }
+
     def get(self, request, *args, **kwargs):
         clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
 
         # 1. Obtener los datos de Django
-        # (Aquí puedes filtrar por fechas, pero por ahora tomamos el primero y todos)
         planificacion_actual = Planificacion.objects.filter(clase=clase).order_by('-fecha_inicio').first()
         entradas_diario = BitacoraPedagogica.objects.filter(clase=clase).order_by('fecha')
 
-        if not planificacion_actual or not entradas_diario.exists():
-            return JsonResponse({"error": "No hay suficientes datos (planificación o diario) para generar un reporte."}, status=404)
-
-        # 2. Convertir los datos a texto simple para la IA
-        texto_plan = f"Objetivos: {planificacion_actual.objetivos}. Actividades Planificadas: {planificacion_actual.actividades_planificadas}."
+        # Validar que existan los datos necesarios
+        if not planificacion_actual:
+            messages.error(request, 
+                f'No se puede generar el reporte para {clase.curso.nombre}. '
+                f'Primero debe crear una planificación para esta clase.')
+            return redirect('bitacora_list', clase_pk=clase.pk)
         
-        texto_diario = ""
-        for entrada in entradas_diario:
-            texto_diario += f"Fecha {entrada.fecha}: {entrada.temas_cubiertos}. Observaciones: {entrada.observaciones_generales}.\n"
+        if not entradas_diario.exists():
+            messages.error(request, 
+                f'No se puede generar el reporte para {clase.curso.nombre}. '
+                f'Primero debe registrar al menos una entrada en el diario pedagógico.')
+            return redirect('bitacora_list', clase_pk=clase.pk)
         
-        # 3. Preparar el JSON para n8n
-        json_para_n8n = {
-            "plan": texto_plan,
-            "diario": texto_diario,
-            "curso": clase.curso.nombre
-        }
+        if entradas_diario.count() < 2:
+            messages.warning(request, 
+                f'El reporte se generará con información limitada. '
+                f'Se recomienda tener al menos 2 entradas en el diario pedagógico para un análisis más preciso. '
+                f'Actualmente solo hay {entradas_diario.count()} entrada(s).')
+            # Continuamos con la generación del reporte
 
-        # 4. Llamar al Webhook de n8n
-        # ¡IMPORTANTE! Cambia esta URL por la URL de tu webhook de n8n
-        # y usa el nombre del servicio de Docker, no 'localhost'.
-        webhook_url = "http://n8n_ia:5678/webhook-test/d545ed76-0dd8-49e7-b686-dea2598465bc"
+        # 2. Realizar análisis pedagógico
+        analisis = self.analizar_pedagogicamente(planificacion_actual, entradas_diario, clase)
         
-        try:
-            response = requests.post(webhook_url, json=json_para_n8n, timeout=15)
-            response.raise_for_status() # Lanza un error si n8n falla
-            print(response.text)
-            
-            opinion_ia = response.text
-            
-            # 2. (Opcional) Limpiamos el texto que viene de la IA
-            if opinion_ia.startswith("**OPINIÓN:**"):
-                opinion_ia = opinion_ia.replace("**OPINIÓN:**", "").strip()
-        except requests.exceptions.ConnectionError:
-            return HttpResponseServerError("Error: No se pudo conectar al servicio de n8n. ¿Está encendido?")
-        except requests.exceptions.RequestException as e:
-            return HttpResponseServerError(f"Error al llamar a la IA: {e}")
+        # 3. Generar texto del análisis
+        opinion_ia = f"""
+**ANÁLISIS PEDAGÓGICO AUTOMATIZADO**
 
-        # 5. Devolver la respuesta (POR AHORA)
-        # En el futuro, aquí generarías el PDF con estos datos.
+**Información General:**
+- Curso: {clase.curso.nombre}
+- Maestro: {clase.maestro.user.get_full_name()}
+- Total de entradas en diario: {analisis['total_entradas']}
+- Período analizado: {entradas_diario.first().fecha} a {entradas_diario.last().fecha}
+
+**Evaluación de Cumplimiento:**
+- Coherencia entre planificación y ejecución: {analisis['coherencia']}
+- Cumplimiento estimado de objetivos: {analisis['cumplimiento_porcentaje']}%
+- Frecuencia de registro: {analisis['frecuencia_registro']}
+
+**Fortalezas Identificadas:**
+{chr(10).join(f"✓ {fortaleza}" for fortaleza in analisis['fortalezas']) if analisis['fortalezas'] else "• Se requiere más información para identificar fortalezas específicas"}
+
+**Sugerencias de Mejora:**
+{chr(10).join(f"• {sugerencia}" for sugerencia in analisis['sugerencias']) if analisis['sugerencias'] else "• Continúe con el excelente trabajo realizado"}
+
+**Observaciones:**
+El análisis se basa en la comparación automatizada entre los objetivos planificados y las actividades registradas en el diario pedagógico. Se recomienda complementar este análisis con evaluación cualitativa adicional.
+        """
+        
+        # 4. Preparar contexto para el PDF
         context = {
             "curso": clase.curso.nombre,
             "maestro": clase.maestro,
-            "planificacion": texto_plan,
-            "diario": texto_diario,
-            "opinion_ia": opinion_ia
+            "planificacion": f"Objetivos: {planificacion_actual.objetivos}. Actividades Planificadas: {planificacion_actual.actividades_planificadas}.",
+            "diario": "\n".join([f"Fecha {entrada.fecha}: {entrada.temas_cubiertos}. Observaciones: {entrada.observaciones_generales}." for entrada in entradas_diario]),
+            "opinion_ia": opinion_ia,
+            "analisis_datos": analisis
         }
         
-        # Renderizamos la plantilla HTML a un string
+        # 5. Generar PDF
         html_string = render_to_string('academico/reporte_ia_pdf.html', context)
-        
-        # Generamos el PDF en memoria
         pdf_file = HTML(string=html_string).write_pdf()
         
-        # Creamos la respuesta HTTP
+        # 6. Devolver respuesta
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        
-        # Añadimos la cabecera para que el navegador lo descargue
-        response['Content-Disposition'] = f'attachment; filename="reporte_{clase.curso.nombre}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="reporte_pedagogico_{clase.curso.nombre}.pdf"'
         
         return response
