@@ -1,7 +1,7 @@
 django==5.2.6
 mysqlclient==2.1.1
 python-decouple
-django-jazzmin
+django-unfold
 pillow
 requests
 WeasyPrint

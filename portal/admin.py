@@ -1,8 +1,9 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import Noticia, Notificacion
 
 @admin.register(Noticia)
-class NoticiaAdmin(admin.ModelAdmin):
+class NoticiaAdmin(ModelAdmin):
     """
     Configuración personalizada para el modelo Noticia en el admin.
     """
@@ -22,16 +23,13 @@ class NoticiaAdmin(admin.ModelAdmin):
         """
         Esta función se llama al guardar la noticia desde el admin.
         """
-        # Si la noticia es nueva (no tiene 'pk' o 'id' todavía),
-        # asigna el usuario que está logueado (request.user) como el autor.
         if not obj.pk:
             obj.autor = request.user
             
-        # Guarda el objeto
         super().save_model(request, obj, form, change)
 
 @admin.register(Notificacion)
-class NotificacionAdmin(admin.ModelAdmin):
+class NotificacionAdmin(ModelAdmin):
     list_display = ('mensaje', 'audiencia', 'autor', 'fecha_envio')
     list_filter = ('audiencia', 'fecha_envio')
     exclude = ('autor',)

@@ -12,8 +12,15 @@ from users.models import Maestro, User
 from .models import Planificacion
 from django.http import JsonResponse, HttpResponseServerError, HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
 from decouple import config
+
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except OSError:
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
+
 
 # Importación condicional de Gemini AI
 try:
@@ -614,6 +621,10 @@ Este análisis básico se fundamenta en {total_entradas} registros del período 
         }
         
         # 4. Generar PDF
+        if not WEASYPRINT_AVAILABLE:
+            messages.error(request, "No se puede generar el PDF porque faltan librerías del sistema de Mac (WeasyPrint).")
+            return redirect('bitacora_list', clase_pk=clase.pk)
+
         html_string = render_to_string('academico/reporte_ia_pdf.html', context)
         pdf_file = HTML(string=html_string).write_pdf()
         

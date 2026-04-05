@@ -1,12 +1,35 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import Competencia, Planificacion, Curso, Clase, PeriodoAcademico, Grado, Cargo, Pago
 
-# Register your models here.
-admin.site.register(Competencia)
-admin.site.register(Planificacion)
-admin.site.register(Curso)
-admin.site.register(Clase)
-admin.site.register(PeriodoAcademico)
-admin.site.register(Grado)
-admin.site.register(Cargo)
-admin.site.register(Pago)
+@admin.register(Competencia)
+class CompetenciaAdmin(ModelAdmin):
+    pass
+
+@admin.register(Planificacion)
+class PlanificacionAdmin(ModelAdmin):
+    pass
+
+@admin.register(Curso)
+class CursoAdmin(ModelAdmin):
+    pass
+
+@admin.register(Clase)
+class ClaseAdmin(ModelAdmin):
+    pass
+
+@admin.register(PeriodoAcademico)
+class PeriodoAcademicoAdmin(ModelAdmin):
+    pass
+
+@admin.register(Grado)
+class GradoAdmin(ModelAdmin):
+    pass
+
+@admin.register(Cargo)
+class CargoAdmin(ModelAdmin):
+    pass
+
+@admin.register(Pago)
+class PagoAdmin(ModelAdmin):
+    pass

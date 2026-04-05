@@ -38,7 +38,10 @@ LANGUAGE_CODE = 'es-GT'
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,18 +54,25 @@ INSTALLED_APPS = [
     'portal',
 ]
 
-JAZZMIN_SETTINGS = {
-    "site_title": "Edutech",
-    "site_header": "Edutech",
-    "site_brand": "Edutech",
-    "welcome_sign": "Bienvenido al Panel de Administración",
-    "topmenu_links": [
-        {"name": "Inicio", "url": "admin:index"},
-        {"app": "academia", "name": "Academia"},
-        {"app": "usuarios", "name": "Usuarios"},
-    ],
-    "show_sidebar": True,
-    "navigation_expanded": True,
+UNFOLD = {
+    "SITE_TITLE": "Edutech Admin",
+    "SITE_HEADER": "Edutech Administrador",
+    "SITE_URL": "/",
+    "COLORS": {
+        "primary": {
+            "50": "238 242 255",
+            "100": "224 231 255",
+            "200": "199 210 254",
+            "300": "165 180 252",
+            "400": "129 140 248",
+            "500": "99 102 241",
+            "600": "79 70 229",
+            "700": "67 56 202",
+            "800": "55 48 163",
+            "900": "49 46 129",
+            "950": "30 27 75",
+        },
+    },
 }
 
 MIDDLEWARE = [
