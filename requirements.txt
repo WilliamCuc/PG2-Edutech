@@ -6,3 +6,6 @@ pillow
 requests
 WeasyPrint
 google-generativeai
+gunicorn
+whitenoise
+dj-database-url

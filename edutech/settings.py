@@ -22,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-xue16-)q#^^^!eecq-ugf_a#x$scde4+g(0$1o++6!bk*r&8@$'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-xue16-)q#^^^!eecq-ugf_a#x$scde4+g(0$1o++6!bk*r&8@$')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
@@ -77,6 +77,7 @@ UNFOLD = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -113,16 +114,31 @@ WSGI_APPLICATION = 'edutech.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': config('DBENGINE', default='django.db.backends.sqlite3'),
-        'NAME': config('DBNAME', default=os.path.join(BASE_DIR, 'db.sqlite3')),
-        'USER': config('DBUSER', default=''),
-        'PASSWORD': config('DBPASSWORD', default=''),
-        'HOST': config('DBHOST', default=''),
-        'PORT': config('DBPORT', default=''),
+import dj_database_url
+
+# Configuración flexible para desarrollo y producción
+if config('DATABASE_URL', default=None):
+    # Si existe DATABASE_URL (como en producción), úsala
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL')
+        )
     }
-}
+else:
+    # Si no, usa variables individuales (desarrollo o AWS RDS)
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DBENGINE', default='django.db.backends.mysql'),
+            'NAME': config('DBNAME', default='edutech'),
+            'USER': config('DBUSER', default=''),
+            'PASSWORD': config('DBPASSWORD', default=''),
+            'HOST': config('DBHOST', default='localhost'),
+            'PORT': config('DBPORT', default='3306'),
+            'OPTIONS': {
+                'sql_mode': 'traditional',
+            }
+        }
+    }
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -166,6 +182,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Directorio de archivos estáticos a nivel de proyecto
 ]
 
+# Configuración de WhiteNoise para archivos estáticos en producción
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -175,3 +194,19 @@ MEDIA_URL = '/media/'
 
 # El camino absoluto al directorio donde se guardan los archivos subidos
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Configuraciones adicionales para producción
+import socket
+
+# Obtener el nombre del host
+hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+
+# Configuración de puerto para Render
+PORT = config('PORT', default=8000, cast=int)
+
+# Configuración de seguridad para producción
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
