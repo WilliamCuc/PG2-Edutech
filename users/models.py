@@ -19,6 +19,43 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_user_type_display()})"
+    
+    def get_maestro_profile(self):
+        """Obtiene o crea el perfil de maestro para este usuario"""
+        if self.user_type != self.UserType.MAESTRO:
+            return None
+            
+        try:
+            return self.maestro
+        except Maestro.DoesNotExist:
+            from django.utils import timezone
+            # Crear perfil de maestro automáticamente
+            return Maestro.objects.create(
+                user=self,
+                numero_empleado=f"EMP-{self.id:04d}",
+                especialidad="Por definir",  
+                fecha_contratacion=timezone.now().date(),
+                telefono_contacto=""
+            )
+    
+    def get_estudiante_profile(self):
+        """Obtiene o crea el perfil de estudiante para este usuario"""
+        if self.user_type != self.UserType.ESTUDIANTE:
+            return None
+            
+        try:
+            return self.estudiante
+        except Estudiante.DoesNotExist:
+            from django.utils import timezone
+            from datetime import timedelta
+            # Crear perfil de estudiante automáticamente
+            return Estudiante.objects.create(
+                user=self,
+                matricula=f"EST-{self.id:04d}",
+                fecha_nacimiento=timezone.now().date() - timedelta(days=365*15),  # Fecha placeholder
+                nombre_padre="Por definir",
+                contacto_emergencia="Por definir"
+            )
 
 class Estudiante(models.Model):
     user = models.OneToOneField(

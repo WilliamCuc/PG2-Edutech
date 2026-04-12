@@ -22,16 +22,20 @@ class PortalEstudianteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     template_name = 'portal/portal_estudiante.html'
 
     def test_func(self):
-        return self.request.user.user_type == User.UserType.ESTUDIANTE
+        return (self.request.user.user_type == User.UserType.ESTUDIANTE and 
+                self.request.user.get_estudiante_profile() is not None)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        estudiante = self.request.user.estudiante
+        estudiante = self.request.user.get_estudiante_profile()
         
         periodo_actual = PeriodoAcademico.objects.order_by('-fecha_inicio').first()
 
+        # Inicializar variables por defecto
         clases_inscritas = []
+        actividades = []
+        
         if periodo_actual:
             clases_inscritas = Clase.objects.filter(
                 estudiantes=estudiante,
@@ -45,14 +49,12 @@ class PortalEstudianteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
 
             subquery_calificacion = subquery_entrega.values('calificacion')[:1]
 
-            
             actividades = Actividad.objects.filter(
                 clase__in=clases_inscritas
             ).select_related('clase__curso').annotate(
                 fue_entregada=Exists(subquery_entrega),
                 calificacion_obtenida=Subquery(subquery_calificacion, output_field=DecimalField())
             ).order_by('fecha_entrega')
-
 
         context['estudiante'] = estudiante
         context['clases_inscritas'] = clases_inscritas

@@ -114,10 +114,10 @@ WSGI_APPLICATION = 'edutech.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-import dj_database_url
-
 # Configuración flexible para desarrollo y producción
 if config('DATABASE_URL', default=None):
+    # Solo importar dj_database_url si se va a usar
+    import dj_database_url
     # Si existe DATABASE_URL (como en producción), úsala
     DATABASES = {
         'default': dj_database_url.config(
@@ -198,9 +198,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Configuraciones adicionales para producción
 import socket
 
-# Obtener el nombre del host
-hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+# Obtener IPs de forma segura
+try:
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+except socket.gaierror:
+    # En caso de error, solo usar IPs básicas
+    INTERNAL_IPS = ["127.0.0.1", "10.0.2.2", "172.17.0.1"]
 
 # Configuración de puerto para Render
 PORT = config('PORT', default=8000, cast=int)
@@ -209,4 +213,6 @@ PORT = config('PORT', default=8000, cast=int)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS if host != '*']
+    # Filtrar hostnames válidos para CSRF_TRUSTED_ORIGINS
+    valid_hosts = [host for host in ALLOWED_HOSTS if host not in ['*', '127.0.0.1', 'localhost']]
+    CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in valid_hosts]
