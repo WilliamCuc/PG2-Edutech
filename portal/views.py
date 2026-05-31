@@ -114,6 +114,10 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 if act not in cursos_dict[curso.pk]['actividades']:
                     cursos_dict[curso.pk]['actividades'].append(act)
 
+        orden_dias = {'LUN': 0, 'MAR': 1, 'MIE': 2, 'JUE': 3, 'VIE': 4, 'SAB': 5}
+        for item in cursos_dict.values():
+            item['clases'].sort(key=lambda c: (orden_dias.get(c.dia_semana, 99), c.hora_inicio))
+
         context['maestro'] = maestro
         context['cursos_con_clases'] = cursos_dict.values()
         context['periodo_actual'] = periodo_actual
