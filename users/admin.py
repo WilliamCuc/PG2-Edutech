@@ -15,8 +15,11 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
         'user_type', 'is_staff'
     )
     
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        (None, {'fields': ('user_type',)}),
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'user_type'),
+        }),
     )
 
     fieldsets = (
