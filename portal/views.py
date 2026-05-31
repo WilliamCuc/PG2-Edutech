@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy, reverse
-from django.db.models import Exists, OuterRef, Subquery, DecimalField, Avg, Q
+from django.db.models import Exists, OuterRef, Subquery, DecimalField, Avg, Q, Case, When, Value, IntegerField
 from .models import Notificacion
 from django.utils import timezone
 from django.forms import formset_factory
@@ -37,10 +37,16 @@ class PortalEstudianteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         actividades = []
         
         if periodo_actual:
+            day_order = Case(
+                When(dia_semana='LUN', then=Value(0)), When(dia_semana='MAR', then=Value(1)),
+                When(dia_semana='MIE', then=Value(2)), When(dia_semana='JUE', then=Value(3)),
+                When(dia_semana='VIE', then=Value(4)), When(dia_semana='SAB', then=Value(5)),
+                output_field=IntegerField(),
+            )
             clases_inscritas = Clase.objects.filter(
                 estudiantes=estudiante,
                 periodo=periodo_actual
-            ).select_related('curso', 'maestro__user').order_by('dia_semana', 'hora_inicio')
+            ).select_related('curso', 'maestro__user').order_by(day_order, 'hora_inicio')
 
             subquery_entrega = Entrega.objects.filter(
                 actividad=OuterRef('pk'), 
@@ -517,10 +523,16 @@ class PadreEstudianteDashboardView(LoginRequiredMixin, UserPassesTestMixin, Temp
         actividades = Actividad.objects.none()
 
         if periodo_actual:
+            day_order = Case(
+                When(dia_semana='LUN', then=Value(0)), When(dia_semana='MAR', then=Value(1)),
+                When(dia_semana='MIE', then=Value(2)), When(dia_semana='JUE', then=Value(3)),
+                When(dia_semana='VIE', then=Value(4)), When(dia_semana='SAB', then=Value(5)),
+                output_field=IntegerField(),
+            )
             clases_inscritas = Clase.objects.filter(
                 estudiantes=estudiante,
                 periodo=periodo_actual
-            ).select_related('curso', 'maestro__user').order_by('dia_semana', 'hora_inicio')
+            ).select_related('curso', 'maestro__user').order_by(day_order, 'hora_inicio')
 
             subquery_entrega = Entrega.objects.filter(
                 actividad=OuterRef('pk'), 
