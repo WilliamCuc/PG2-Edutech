@@ -13,7 +13,7 @@ from .models import Notificacion
 from django.utils import timezone
 from django.forms import formset_factory
 from django.views import View
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.http import HttpResponseBadRequest
 from django.db import transaction
 
@@ -88,8 +88,34 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 periodo=periodo_actual
             ).select_related('curso').prefetch_related('estudiantes__user').order_by('dia_semana', 'hora_inicio')
 
+            for clase in clases_asignadas:
+                grados = clase.grados_asignados.all()
+                if grados.exists():
+                    estudiantes_del_grado = Estudiante.objects.filter(grado__in=grados)
+                    inscritos = set(clase.estudiantes.values_list('pk', flat=True))
+                    for est in estudiantes_del_grado:
+                        if est.pk not in inscritos:
+                            clase.estudiantes.add(est)
+
+        cursos_dict = OrderedDict()
+        for clase in clases_asignadas:
+            curso = clase.curso
+            if curso.pk not in cursos_dict:
+                cursos_dict[curso.pk] = {
+                    'curso': curso,
+                    'clases': [],
+                    'estudiantes': set(),
+                    'actividades': [],
+                }
+            cursos_dict[curso.pk]['clases'].append(clase)
+            for est in clase.estudiantes.all():
+                cursos_dict[curso.pk]['estudiantes'].add(est)
+            for act in clase.actividades.all():
+                if act not in cursos_dict[curso.pk]['actividades']:
+                    cursos_dict[curso.pk]['actividades'].append(act)
+
         context['maestro'] = maestro
-        context['clases_asignadas'] = clases_asignadas
+        context['cursos_con_clases'] = cursos_dict.values()
         context['periodo_actual'] = periodo_actual
         context['titulo'] = 'Mi Portal de Maestro'
         context['notificaciones'] = Notificacion.objects.filter(
