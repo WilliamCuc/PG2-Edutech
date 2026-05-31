@@ -6,11 +6,13 @@
 <div class="bg-white p-8 rounded-lg shadow-md mx-auto max-h-screen overflow-y-auto">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Horario del Periodo: {{ periodo_actual.nombre }}</h1>
+        {% if request.user.user_type != 'ESTUDIANTE' and request.user.user_type != 'PADRE' %}
         <div>
             <a href="{% url 'clase_create' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 + Asignar Nueva Clase
             </a>
         </div>
+        {% endif %}
     </div>
 
     <div class="overflow-x-auto">
@@ -41,10 +43,12 @@
                             </p>
                             <p class="text-xs text-gray-600">{{ clase.maestro.user.get_full_name }}</p>
                             
+                            {% if request.user.user_type != 'ESTUDIANTE' and request.user.user_type != 'PADRE' %}
                             <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a href="{% url 'clase_update' clase.pk %}" class="text-xs text-indigo-600 hover:text-indigo-900">✏️</a>
                                 <a href="{% url 'clase_delete' clase.pk %}" class="text-xs text-red-600 hover:text-red-900 ml-1">🗑️</a>
                             </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </td>

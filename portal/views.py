@@ -41,7 +41,7 @@ class PortalEstudianteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
                 estudiantes=estudiante,
                 periodo=periodo_actual
             ).select_related('curso', 'maestro__user').order_by('dia_semana', 'hora_inicio')
-            
+
             subquery_entrega = Entrega.objects.filter(
                 actividad=OuterRef('pk'), 
                 estudiante=estudiante
