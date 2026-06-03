@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView, CreateView, FormView, DetailView, UpdateView, DeleteView, ListView
 from academico.models import Clase, PeriodoAcademico, Actividad, Entrega, AsistenciaClase, Planificacion, Competencia
@@ -451,9 +452,28 @@ class TomarAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
                     defaults={'estado': estado}
                 )
             
+            messages.success(request, f"Asistencia guardada para el {fecha_seleccionada}")
             return redirect('portal_maestro')
         
-        return self.get(request, *args, **kwargs)
+        # Si el formset no es válido, reconstruir el contexto y mostrar errores
+        estudiantes = clase.estudiantes.all().select_related('user')
+        estudiantes_data = [{'nombre': est.user.get_full_name(), 'id': est.pk} for est in estudiantes]
+        alumnos_con_form = zip(estudiantes_data, formset)
+
+        fecha_anterior = fecha_seleccionada - timedelta(days=1)
+        fecha_siguiente = fecha_seleccionada + timedelta(days=1)
+        es_hoy = (fecha_seleccionada == timezone.now().date())
+
+        context = {
+            'clase': clase,
+            'formset': formset,
+            'alumnos_con_form': alumnos_con_form,
+            'fecha_seleccionada': fecha_seleccionada,
+            'fecha_anterior_str': fecha_anterior.isoformat(),
+            'fecha_siguiente_str': fecha_siguiente.isoformat(),
+            'es_hoy': es_hoy,
+        }
+        return render(request, self.template_name, context)
 
 class PlanificacionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Planificacion
