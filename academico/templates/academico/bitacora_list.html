@@ -39,13 +39,17 @@
                             </p>
                         </div>
                     </div>
-                    {% if entrada.evidencia_archivo or entrada.evidencia_foto %}
                     <div class="flex items-center gap-2">
+                        {% if entrada.evidencia_archivo or entrada.evidencia_foto %}
                         <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
                             <i class="fas fa-paperclip mr-1"></i> Con adjuntos
                         </span>
+                        {% endif %}
+                        <a href="{% url 'bitacora_update' clase.pk entrada.pk %}" 
+                           class="bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-200">
+                            <i class="fas fa-edit mr-1"></i> Editar
+                        </a>
                     </div>
-                    {% endif %}
                 </div>
             </div>
             

@@ -254,6 +254,11 @@ class BitacoraUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     form_class = BitacoraForm
     template_name = 'academico/bitacora_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['clase'] = self.get_object().clase
+        return kwargs
+
     def test_func(self):
         return self.request.user.maestro == self.get_object().clase.maestro
 

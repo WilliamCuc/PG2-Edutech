@@ -91,7 +91,7 @@ class BitacoraForm(forms.ModelForm):
             'evidencia_foto',
         ]
         widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'fecha': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'objetivos_sesion': forms.Textarea(attrs={'rows': 3}),
             'temas_cubiertos': forms.Textarea(attrs={'rows': 4}),
             'recursos_usados': forms.Textarea(attrs={'rows': 3}),
