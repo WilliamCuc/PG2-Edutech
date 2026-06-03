@@ -106,12 +106,22 @@
                                     <span class="text-sm font-medium text-gray-700">
                                         <i class="fas fa-file-alt text-gray-400 mr-2"></i>{{ actividad.titulo }}
                                     </span>
-                                    <a href="{% url 'actividad_entregas' actividad.pk %}" 
-                                       class="text-blue-600 hover:text-blue-700 font-semibold text-sm">
-                                        <span class="bg-blue-100 px-3 py-1 rounded-full">
-                                            {{ actividad.entregas.count }}/{{ item.estudiantes|length }}
-                                        </span>
-                                    </a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{% url 'actividad_entregas' actividad.pk %}" 
+                                           class="text-blue-600 hover:text-blue-700 font-semibold text-sm">
+                                            <span class="bg-blue-100 px-3 py-1 rounded-full">
+                                                {{ actividad.entregas.count }}/{{ item.estudiantes|length }}
+                                            </span>
+                                        </a>
+                                        <a href="{% url 'actividad_update' actividad.pk %}" 
+                                           class="text-amber-600 hover:text-amber-800 text-sm" title="Editar actividad">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'actividad_delete' actividad.pk %}" 
+                                           class="text-red-600 hover:text-red-800 text-sm" title="Eliminar actividad">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
                                 </li>
                             {% endfor %}
                             </ul>

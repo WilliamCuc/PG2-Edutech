@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Editar Entrega{% endblock %}
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+    <div class="border-b pb-4 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Editar Entrega</h1>
+        <p class="text-gray-600 mt-1"><strong>Estudiante:</strong> {{ entrega.estudiante.user.get_full_name }}</p>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+        <p><strong>Actividad actual:</strong> {{ entrega.actividad.titulo }} — {{ entrega.actividad.clase.curso.nombre }}</p>
+        <p><strong>Fecha de entrega:</strong> {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</p>
+        {% if entrega.archivo %}
+        <p><strong>Archivo:</strong> <a href="{{ entrega.archivo.url }}" target="_blank" class="text-indigo-600 hover:underline">Descargar</a></p>
+        {% endif %}
+        {% if entrega.comentarios %}
+        <p><strong>Comentarios del estudiante:</strong></p>
+        <blockquote class="pl-4 border-l-4 border-gray-300 italic text-gray-700">"{{ entrega.comentarios }}"</blockquote>
+        {% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="space-y-4">{{ form.as_p }}</div>
+        <div class="mt-6 flex items-center gap-4">
+            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                <i class="fas fa-save mr-1"></i> Guardar Cambios
+            </button>
+            <a href="{% url 'actividad_entregas' entrega.actividad.pk %}" class="text-gray-600 hover:text-gray-900">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

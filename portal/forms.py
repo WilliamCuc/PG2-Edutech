@@ -54,6 +54,27 @@ class CalificacionForm(forms.ModelForm):
                 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
             })
 
+class EntregaEditForm(forms.ModelForm):
+    """
+    Formulario para que el maestro edite una entrega (cambiar actividad, calificar, etc.).
+    """
+    class Meta:
+        model = Entrega
+        fields = ['actividad', 'calificacion', 'comentarios_maestro']
+        widgets = {
+            'comentarios_maestro': forms.Textarea(attrs={'rows': 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        maestro = kwargs.pop('maestro', None)
+        super().__init__(*args, **kwargs)
+        if maestro:
+            self.fields['actividad'].queryset = Actividad.objects.filter(clase__maestro=maestro)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+            })
+
 
 class NoticiaForm(forms.ModelForm):
     class Meta:

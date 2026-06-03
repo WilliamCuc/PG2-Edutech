@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Crear Nueva Actividad{% endblock %}
+{% block title %}{{ titulo }}{% endblock %}
 {% block content %}
 <div class="max-w-3xl mx-auto">
     <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
@@ -8,7 +8,7 @@
                 <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4">
                     <i class="fas fa-tasks"></i>
                 </div>
-                Crear Nueva Actividad
+                {{ titulo }}
             </h1>
             <p class="text-gray-500 ml-16">Define una nueva tarea para tus estudiantes</p>
         </div>

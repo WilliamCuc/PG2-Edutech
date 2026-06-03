@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView, CreateView, FormView, DetailView, UpdateView, DeleteView, ListView
 from academico.models import Clase, PeriodoAcademico, Actividad, Entrega, AsistenciaClase, Planificacion, Competencia
-from .forms import ActividadForm, EntregaForm, CalificacionForm, NoticiaForm, NotificacionForm, AsistenciaForm, PlanificacionForm
+from .forms import ActividadForm, EntregaForm, CalificacionForm, EntregaEditForm, NoticiaForm, NotificacionForm, AsistenciaForm, PlanificacionForm
 from portal.models import Noticia
 from users.models import User, Maestro, Estudiante, PadreDeFamilia
 from datetime import datetime, timedelta
@@ -162,9 +162,43 @@ class ActividadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form.instance.clase = clase
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Crear Nueva Actividad'
+        return context
+
     def get_success_url(self):
         return reverse_lazy('portal_maestro')
-    
+
+class ActividadUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Actividad
+    form_class = ActividadForm
+    template_name = 'portal/actividad_form.html'
+
+    def test_func(self):
+        actividad = self.get_object()
+        return self.request.user.user_type == User.UserType.MAESTRO and actividad.clase.maestro == self.request.user.maestro
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Editar Actividad'
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('portal_maestro')
+
+class ActividadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Actividad
+    template_name = 'portal/actividad_confirm_delete.html'
+    context_object_name = 'actividad'
+
+    def test_func(self):
+        actividad = self.get_object()
+        return self.request.user.user_type == User.UserType.MAESTRO and actividad.clase.maestro == self.request.user.maestro
+
+    def get_success_url(self):
+        return reverse_lazy('portal_maestro')
+
 class ActividadDetailView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     template_name = 'portal/actividad_detail.html'
     form_class = EntregaForm
@@ -215,6 +249,36 @@ class CalificarEntregaView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Entrega
     form_class = CalificacionForm
     template_name = 'portal/calificar_entrega_form.html'
+    context_object_name = 'entrega'
+
+    def test_func(self):
+        entrega = self.get_object()
+        return self.request.user.user_type == User.UserType.MAESTRO and entrega.actividad.clase.maestro == self.request.user.maestro
+
+    def get_success_url(self):
+        return reverse('actividad_entregas', kwargs={'pk': self.object.actividad.pk})
+
+class EntregaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Entrega
+    form_class = EntregaEditForm
+    template_name = 'portal/entrega_form.html'
+    context_object_name = 'entrega'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['maestro'] = self.request.user.maestro
+        return kwargs
+
+    def test_func(self):
+        entrega = self.get_object()
+        return self.request.user.user_type == User.UserType.MAESTRO and entrega.actividad.clase.maestro == self.request.user.maestro
+
+    def get_success_url(self):
+        return reverse('actividad_entregas', kwargs={'pk': self.object.actividad.pk})
+
+class EntregaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Entrega
+    template_name = 'portal/entrega_confirm_delete.html'
     context_object_name = 'entrega'
 
     def test_func(self):
