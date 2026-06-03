@@ -51,37 +51,46 @@
         </h2>
 
         {% if clases_inscritas %}
-            <div class="overflow-hidden rounded-xl border border-gray-200">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Curso</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Maestro</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Día</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Horario</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        {% for clase in clases_inscritas %}
-                        <tr class="hover:bg-primary-50 transition-colors duration-150">
-                            <td class="px-6 py-4 font-semibold text-gray-900">
-                                <i class="fas fa-book text-primary-500 mr-2"></i>{{ clase.curso.nombre }}
-                            </td>
-                            <td class="px-6 py-4 text-gray-600">
-                                <i class="fas fa-chalkboard-teacher text-gray-400 mr-2"></i>{{ clase.maestro.user.get_full_name }}
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-700">
-                                    {{ clase.get_dia_semana_display }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-gray-600 font-mono text-sm">
-                                <i class="fas fa-clock text-gray-400 mr-2"></i>{{ clase.hora_inicio|time:"H:i" }} - {{ clase.hora_fin|time:"H:i" }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="space-y-3">
+                {% for dia, clases in horario_por_dia.items %}
+                    {% if clases %}
+                    <details class="group bg-gray-50 rounded-xl border border-gray-200 overflow-hidden" {% if forloop.first %}open{% endif %}>
+                        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-100 transition-colors duration-150">
+                            <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                                <i class="fas fa-calendar-day text-blue-500 mr-2"></i> {{ dia }}
+                                <span class="ml-2 text-sm font-normal text-gray-500">({{ clases|length }})</span>
+                            </h3>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200 group-open:rotate-180"></i>
+                        </summary>
+                        <div class="overflow-hidden rounded-b-xl border-t border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Curso</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Maestro</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Horario</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-100">
+                                    {% for clase in clases %}
+                                    <tr class="hover:bg-primary-50 transition-colors duration-150">
+                                        <td class="px-6 py-3 font-semibold text-gray-900">
+                                            <i class="fas fa-book text-primary-500 mr-2"></i>{{ clase.curso.nombre }}
+                                        </td>
+                                        <td class="px-6 py-3 text-gray-600">
+                                            <i class="fas fa-chalkboard-teacher text-gray-400 mr-2"></i>{{ clase.maestro.user.get_full_name }}
+                                        </td>
+                                        <td class="px-6 py-3 text-gray-600 font-mono text-sm">
+                                            <i class="fas fa-clock text-gray-400 mr-2"></i>{{ clase.hora_inicio|time:"H:i" }} - {{ clase.hora_fin|time:"H:i" }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                    {% endif %}
+                {% endfor %}
             </div>
         {% else %}
             <div class="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-6 rounded-xl" role="alert">
@@ -107,41 +116,51 @@
 
         {% if actividades %}
             <div class="space-y-3">
-                {% for actividad in actividades %}
-                    <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-white to-gray-50">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h3 class="font-bold text-gray-800 text-lg mb-2">{{ actividad.titulo }}</h3>
-                                <p class="text-sm text-gray-600 mb-3">
-                                    <i class="fas fa-book text-blue-500 mr-1"></i> {{ actividad.clase.curso.nombre }}
-                                </p>
-                                <p class="text-xs text-gray-500">
-                                    <i class="fas fa-clock mr-1"></i> 
-                                    <span class="font-semibold">Fecha Límite:</span> {{ actividad.fecha_entrega|date:"d/m/Y H:i" }}
-                                </p>
-                            </div>
-                            <div class="flex flex-col items-end space-y-2">
-                                {% if actividad.fue_entregada %}
-                                    {% if actividad.calificacion_obtenida is not None %}
-                                        <span class="px-4 py-2 text-sm font-bold text-blue-800 bg-blue-100 rounded-lg border-2 border-blue-200">
-                                            <i class="fas fa-check-circle mr-1"></i> Calificado: {{ actividad.calificacion_obtenida }}
-                                        </span>
+                {% for curso_nombre, actividades_curso in actividades_por_curso.items %}
+                <details class="group bg-gray-50 rounded-xl border border-gray-200 overflow-hidden" {% if forloop.first %}open{% endif %}>
+                    <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-100 transition-colors duration-150">
+                        <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                            <i class="fas fa-book text-purple-500 mr-2"></i> {{ curso_nombre }}
+                            <span class="ml-2 text-sm font-normal text-gray-500">({{ actividades_curso|length }})</span>
+                        </h3>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200 group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-4 space-y-3 border-t border-gray-200">
+                        {% for actividad in actividades_curso %}
+                        <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-white">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-gray-800 text-lg mb-2">{{ actividad.titulo }}</h4>
+                                    <p class="text-xs text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span class="font-semibold">Fecha Límite:</span> {{ actividad.fecha_entrega|date:"d/m/Y H:i" }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-col items-end space-y-2 ml-4">
+                                    {% if actividad.fue_entregada %}
+                                        {% if actividad.calificacion_obtenida is not None %}
+                                            <span class="px-4 py-2 text-sm font-bold text-blue-800 bg-blue-100 rounded-lg border-2 border-blue-200">
+                                                <i class="fas fa-check-circle mr-1"></i> Calificado: {{ actividad.calificacion_obtenida }}
+                                            </span>
+                                        {% else %}
+                                            <span class="px-4 py-2 text-sm font-bold text-green-800 bg-green-100 rounded-lg border-2 border-green-200">
+                                                <i class="fas fa-check mr-1"></i> Entregado
+                                            </span>
+                                        {% endif %}
                                     {% else %}
-                                        <span class="px-4 py-2 text-sm font-bold text-green-800 bg-green-100 rounded-lg border-2 border-green-200">
-                                            <i class="fas fa-check mr-1"></i> Entregado
+                                        <span class="px-4 py-2 text-sm font-bold text-red-800 bg-red-100 rounded-lg border-2 border-red-200 animate-pulse">
+                                            <i class="fas fa-exclamation-circle mr-1"></i> Pendiente
                                         </span>
                                     {% endif %}
-                                {% else %}
-                                    <span class="px-4 py-2 text-sm font-bold text-red-800 bg-red-100 rounded-lg border-2 border-red-200 animate-pulse">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> Pendiente
-                                    </span>
-                                {% endif %}
-                                <a href="{% url 'actividad_detail' actividad.pk %}" class="text-blue-600 hover:text-blue-700 font-semibold text-sm hover:underline">
-                                    Ver Detalles <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
+                                    <a href="{% url 'actividad_detail' actividad.pk %}" class="text-blue-600 hover:text-blue-700 font-semibold text-sm hover:underline">
+                                        Ver Detalles <i class="fas fa-arrow-right ml-1"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
+                </details>
                 {% endfor %}
             </div>
         {% else %}

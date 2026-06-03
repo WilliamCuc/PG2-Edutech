@@ -62,10 +62,29 @@ class PortalEstudianteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
                 calificacion_obtenida=Subquery(subquery_calificacion, output_field=DecimalField())
             ).order_by('fecha_entrega')
 
+        # Agrupar horario por día
+        orden_dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+        horario_por_dia = OrderedDict()
+        for dia in orden_dias:
+            horario_por_dia[dia] = []
+        for clase in clases_inscritas:
+            dia_display = clase.get_dia_semana_display()
+            horario_por_dia[dia_display].append(clase)
+
+        # Agrupar actividades por curso
+        actividades_por_curso = OrderedDict()
+        for actividad in actividades:
+            curso_nombre = actividad.clase.curso.nombre
+            if curso_nombre not in actividades_por_curso:
+                actividades_por_curso[curso_nombre] = []
+            actividades_por_curso[curso_nombre].append(actividad)
+
         context['estudiante'] = estudiante
         context['clases_inscritas'] = clases_inscritas
         context['periodo_actual'] = periodo_actual
         context['actividades'] = actividades
+        context['horario_por_dia'] = horario_por_dia
+        context['actividades_por_curso'] = actividades_por_curso
         context['titulo'] = 'Mi Portal de Estudiante'
         context['notificaciones'] = Notificacion.objects.filter(
             Q(audiencia=Notificacion.TargetAudiencia.TODOS) |
