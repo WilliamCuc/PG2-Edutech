@@ -496,6 +496,7 @@ class PlanificacionCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Crear Nueva Planificación'
+        context['clase_pk'] = self.kwargs['clase_pk']
         return context
 
 class PlanificacionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -517,6 +518,7 @@ class PlanificacionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = 'Editar Planificación'
+        context['clase_pk'] = self.object.clase.pk
         return context
 
 class PlanificacionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

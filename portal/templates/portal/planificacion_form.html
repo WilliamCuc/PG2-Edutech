@@ -95,7 +95,7 @@
                         class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
                     <i class="fas fa-save mr-2"></i> Guardar
                 </button>
-                <a href="{% url 'planificacion_list' form.instance.clase.pk|default:view.kwargs.clase_pk %}" 
+                <a href="{% url 'planificacion_list' clase_pk %}" 
                    class="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                     <i class="fas fa-times mr-2"></i> Cancelar
                 </a>
