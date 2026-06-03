@@ -409,48 +409,40 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
                 - Tiempo de Sesión: {entrada.tiempo_sesion_minutos} minutos
                 """
             
-            # Prompt especializado para análisis pedagógico
+            # Prompt especializado para análisis pedagógico (versión concisa)
             prompt = f"""
-            Como experto en pedagogía, analiza la coherencia entre la planificación académica y su ejecución real. 
+            Como experto en pedagogía, analiza brevemente la coherencia entre la planificación académica y su ejecución real. 
 
             {texto_planificacion}
 
             {texto_diario}
 
-            IMPORTANTE: Responde EXACTAMENTE siguiendo esta estructura (respeta el formato de markdown):
+            IMPORTANTE: Responde EXACTAMENTE con esta estructura (máximo 2 líneas por sección, usa viñetas):
 
-            **ANÁLISIS PEDAGÓGICO CON INTELIGENCIA ARTIFICIAL**
+            **ANÁLISIS PEDAGÓGICO CON IA**
 
             **Información General:**
-            - Curso: {clase.curso.nombre}
-            - Maestro: {clase.maestro.user.get_full_name()}
-            - Total de entradas en diario: {entradas_diario.count()}
-            - Período analizado: {entradas_diario.first().fecha} a {entradas_diario.last().fecha}
+            - Curso: {clase.curso.nombre} | Maestro: {clase.maestro.user.get_full_name()} | Entradas: {entradas_diario.count()} | Período: {entradas_diario.first().fecha} a {entradas_diario.last().fecha}
 
             **1. Cumplimiento de Objetivos:**
-            [Analiza específicamente qué porcentaje de cumplimiento estimas y por qué, basándote en los datos reales]
+            [1-2 líneas con % estimado y razón principal]
 
             **2. Coherencia Curricular:**
-            [Evalúa qué tan bien se alinea lo planificado con lo ejecutado, con ejemplos específicos]
+            [1-2 líneas evaluando alineación planificación-ejecución]
 
-            **3. Fortalezas Identificadas:**
-            [Lista 3-4 fortalezas específicas del trabajo docente, basadas en los datos del diario]
+            **3. Fortalezas:**
+            [3 viñetas cortas]
 
             **4. Sugerencias de Mejora:**
-            [Proporciona 3-4 sugerencias específicas y constructivas para optimizar el proceso pedagógico]
+            [3 viñetas cortas]
 
             **5. Recomendaciones Estratégicas:**
-            [Ofrece estrategias concretas para mejorar la efectividad de la enseñanza basándote en los patrones observados]
+            [2-3 viñetas cortas]
 
-            **6. Análisis de Recursos:**
-            [Evalúa la efectividad de los recursos utilizados según lo registrado en el diario]
+            **Observaciones Finales:**
+            [1-2 líneas de conclusión]
 
-            **Observaciones:**
-            [Conclusiones finales y observaciones adicionales importantes]
-
-            Mantén un tono profesional, constructivo y orientado al crecimiento pedagógico. 
-            Proporciona insights específicos basados ÚNICAMENTE en los datos presentados.
-            NO uses frases genéricas, todo debe estar fundamentado en la información real proporcionada.
+            Sé CONCISO. Basa todo ÚNICAMENTE en los datos proporcionados.
             """
             
             # Generar análisis con Gemini
@@ -516,37 +508,30 @@ class DescargarReporteIAView(LoginRequiredMixin, UserPassesTestMixin, View):
         periodo_fin = entradas_diario.last().fecha.strftime("%d/%m/%Y") if entradas_diario.last() else "N/A"
         
         analisis_completo = f"""
-**ANÁLISIS PEDAGÓGICO CON INTELIGENCIA ARTIFICIAL**
+**ANÁLISIS PEDAGÓGICO CON IA**
 
 **Información General:**
-- Curso: {clase.curso.nombre}
-- Maestro: {clase.maestro.user.get_full_name()}
-- Total de entradas en diario: {total_entradas}
-- Período analizado: {periodo_inicio} a {periodo_fin}
+Curso: {clase.curso.nombre} | Maestro: {clase.maestro.user.get_full_name()} | Entradas: {total_entradas} | Período: {periodo_inicio} a {periodo_fin}
 
 **1. Cumplimiento de Objetivos:**
-Con base en las {total_entradas} entradas registradas del diario pedagógico, se estima un cumplimiento del {cumplimiento_porcentaje}% de los objetivos planificados. Este porcentaje refleja la {frecuencia_registro} en el registro de actividades.
+Cumplimiento estimado del {cumplimiento_porcentaje}%. Frecuencia de registro: {frecuencia_registro}.
 
 **2. Coherencia Curricular:**
-Se observa una buena alineación entre la planificación curricular y las actividades ejecutadas. Los registros del diario muestran continuidad temática y progresión pedagógica adecuada para el nivel educativo.
+Alineación adecuada entre planificación y ejecución con continuidad temática.
 
-**3. Fortalezas Identificadas:**
+**3. Fortalezas:**
 {self._generar_fortalezas_basicas(contenido_diario, total_entradas, cumplimiento_porcentaje)}
 
 **4. Sugerencias de Mejora:**
 {self._generar_sugerencias_basicas(contenido_diario, total_entradas, cumplimiento_porcentaje)}
 
 **5. Recomendaciones Estratégicas:**
-• Realizar evaluaciones diagnósticas periódicas para ajustar la metodología
-• Establecer metas de aprendizaje claras y medibles para cada sesión
-• Crear espacios de reflexión pedagógica sobre la efectividad de las estrategias
-• Desarrollar un seguimiento personalizado para estudiantes con necesidades especiales
+• Realizar evaluaciones diagnósticas periódicas
+• Establecer metas medibles para cada sesión
+• Dar seguimiento personalizado según necesidades
 
-**6. Análisis de Recursos:**
-Los recursos documentados en el diario pedagógico son apropiados para el nivel educativo. Se sugiere evaluar la incorporación de recursos tecnológicos para enriquecer las metodologías de enseñanza.
-
-**Observaciones:**
-Este análisis básico se fundamenta en {total_entradas} registros del período {periodo_inicio} al {periodo_fin}. Para obtener insights más detallados y personalizados, se recomienda configurar la integración con Gemini AI.
+**Observaciones Finales:**
+Análisis basado en {total_entradas} registros del {periodo_inicio} al {periodo_fin}. Configurar Gemini AI para análisis más detallados.
         """
         
         return {
@@ -613,12 +598,14 @@ Este análisis básico se fundamenta en {total_entradas} registros del período 
         # 2. Realizar análisis pedagógico con Gemini
         analisis = self.analizar_pedagogicamente_con_gemini(planificacion_actual, entradas_diario, clase, request)
         
-        # 3. Preparar contexto para el PDF
+        # 3. Preparar contexto para el PDF (versión resumida)
+        resumen_planificacion = f"Objetivos: {planificacion_actual.objetivos}"[:500]
+        resumen_diario = "\n".join([f"• {entrada.fecha}: {entrada.temas_cubiertos[:150]}" for entrada in entradas_diario])
         context = {
             "curso": clase.curso.nombre,
             "maestro": clase.maestro,
-            "planificacion": f"Objetivos: {planificacion_actual.objetivos}. Actividades Planificadas: {planificacion_actual.actividades_planificadas}.",
-            "diario": "\n".join([f"Fecha {entrada.fecha}: {entrada.temas_cubiertos}. Observaciones: {entrada.observaciones_generales}." for entrada in entradas_diario]),
+            "planificacion": resumen_planificacion,
+            "diario": resumen_diario,
             "opinion_ia": analisis['analisis_completo'],
             "analisis_datos": analisis,
             "periodo_analizado": f"{entradas_diario.first().fecha} a {entradas_diario.last().fecha}",
