@@ -428,8 +428,8 @@ class TomarAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
             'formset': formset,
             'alumnos_con_form': alumnos_con_form,
             'fecha_seleccionada': fecha_seleccionada,
-            'fecha_anterior_str': fecha_anterior.isoformat(),
-            'fecha_siguiente_str': fecha_siguiente.isoformat(),
+            'fecha_anterior': fecha_anterior,
+            'fecha_siguiente': fecha_siguiente,
             'es_hoy': es_hoy,
         }
         return render(request, self.template_name, context)
@@ -469,8 +469,8 @@ class TomarAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
             'formset': formset,
             'alumnos_con_form': alumnos_con_form,
             'fecha_seleccionada': fecha_seleccionada,
-            'fecha_anterior_str': fecha_anterior.isoformat(),
-            'fecha_siguiente_str': fecha_siguiente.isoformat(),
+            'fecha_anterior': fecha_anterior,
+            'fecha_siguiente': fecha_siguiente,
             'es_hoy': es_hoy,
         }
         return render(request, self.template_name, context)
