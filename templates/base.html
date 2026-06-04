@@ -122,9 +122,17 @@
                             </a>
 
                         {% elif user.user_type == 'PADRE' %}
-                            <a href="{% url 'portal_padre' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                            <span class="text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
                                 <i class="fas fa-home mr-1"></i> Mi Portal
-                            </a>
+                            </span>
+                            {% if request.session.estudiante_seleccionado_pk %}
+                                <a href="{% url 'portal_padre_calificaciones' request.session.estudiante_seleccionado_pk %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                    <i class="fas fa-star mr-1"></i> Mis Notas
+                                </a>
+                                <a href="{% url 'boleta_estudiante' %}" class="text-gray-700 hover-primary px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                                    <i class="fas fa-file-alt mr-1"></i> Mi Boleta
+                                </a>
+                            {% endif %}
                         {% endif %}
 
                     {% endif %}
