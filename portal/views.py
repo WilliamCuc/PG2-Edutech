@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView, CreateView, FormView, DetailView, UpdateView, DeleteView, ListView
-from academico.models import Clase, PeriodoAcademico, Actividad, Entrega, AsistenciaClase, Planificacion, Competencia
+from academico.models import Clase, PeriodoAcademico, Actividad, Entrega, AsistenciaClase, Planificacion, Competencia, BitacoraPedagogica
 from .forms import ActividadForm, EntregaForm, CalificacionForm, EntregaEditForm, NoticiaForm, NotificacionForm, AsistenciaForm, PlanificacionForm
 from portal.models import Noticia
 from users.models import User, Maestro, Estudiante, PadreDeFamilia
@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy, reverse
-from django.db.models import Exists, OuterRef, Subquery, DecimalField, Avg, Q, Case, When, Value, IntegerField, Count
+from django.db.models import Exists, OuterRef, Subquery, DecimalField, Avg, Q, Case, When, Value, IntegerField, Count, F, ExpressionWrapper, DurationField
 from .models import Notificacion
 from django.utils import timezone
 from django.forms import formset_factory
@@ -203,6 +203,26 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         periodo_actual = PeriodoAcademico.objects.order_by('-fecha_inicio').first()
 
         cursos_con_clases = []
+        kpi = {
+            'total_estudiantes': 0,
+            'total_cursos': 0,
+            'total_clases_semana': 0,
+            'total_actividades': 0,
+            'total_entregas': 0,
+            'total_entregas_calificadas': 0,
+            'promedio_general': None,
+            'tasa_asistencia': None,
+            'total_bitacoras': 0,
+            'total_planificaciones': 0,
+            'total_bitacoras_con_tiempo': 0,
+            'tiempo_promedio_bitacora': None,
+            'tiempo_promedio_segundos': None,
+            'total_actividades_con_tiempo': 0,
+            'tiempo_promedio_actividad': None,
+            'total_planificaciones_con_tiempo': 0,
+            'tiempo_promedio_planificacion': None,
+        }
+
         if periodo_actual and maestro:
             clases = Clase.objects.filter(
                 maestro=maestro,
@@ -210,6 +230,9 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             ).select_related('curso').prefetch_related(
                 'estudiantes__user'
             ).order_by('curso__nombre')
+
+            kpi['total_clases_semana'] = clases.count()
+            todas_clases_ids = list(clases.values_list('pk', flat=True))
 
             clases_por_curso = OrderedDict()
             for clase in clases:
@@ -220,20 +243,17 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                         'clases': [],
                         'estudiantes': [],
                         'estudiantes_set': set(),
+                        'clase_ids': [],
                     }
                 clases_por_curso[curso_nombre]['clases'].append(clase)
+                clases_por_curso[curso_nombre]['clase_ids'].append(clase.pk)
                 for est in clase.estudiantes.all():
                     if est.pk not in clases_por_curso[curso_nombre]['estudiantes_set']:
                         clases_por_curso[curso_nombre]['estudiantes'].append(est)
                         clases_por_curso[curso_nombre]['estudiantes_set'].add(est.pk)
 
-            todas_las_clases = Clase.objects.filter(
-                maestro=maestro,
-                periodo=periodo_actual
-            ).values_list('pk', flat=True)
-
             actividades = Actividad.objects.filter(
-                clase__in=todas_las_clases
+                clase__in=todas_clases_ids
             ).prefetch_related('entregas').select_related('clase__curso').order_by('-fecha_creacion')
 
             actividades_por_curso = OrderedDict()
@@ -243,16 +263,199 @@ class PortalMaestroView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                     actividades_por_curso[curso_nombre] = []
                 actividades_por_curso[curso_nombre].append(actividad)
 
+            kpi['total_actividades'] = actividades.count()
+
+            entregas = Entrega.objects.filter(
+                actividad__clase__in=todas_clases_ids
+            )
+            kpi['total_entregas'] = entregas.count()
+            kpi['total_entregas_calificadas'] = entregas.filter(calificacion__isnull=False).count()
+
+            prom_gral = entregas.filter(calificacion__isnull=False).aggregate(
+                avg=Avg('calificacion')
+            )['avg']
+            kpi['promedio_general'] = round(prom_gral, 1) if prom_gral else None
+
+            asistencias = AsistenciaClase.objects.filter(clase__in=todas_clases_ids)
+            total_asistencias = asistencias.count()
+            if total_asistencias > 0:
+                presentes = asistencias.filter(estado=AsistenciaClase.EstadoAsistencia.PRESENTE).count()
+                kpi['tasa_asistencia'] = round((presentes / total_asistencias) * 100, 1)
+
+            kpi['total_planificaciones'] = Planificacion.objects.filter(
+                clase__in=todas_clases_ids
+            ).count()
+
+            bitacoras_con_tiempo = BitacoraPedagogica.objects.filter(
+                clase__in=todas_clases_ids,
+                fecha_inicio_calculo__isnull=False,
+                fecha_fin_calculo__isnull=False,
+            )
+            kpi['total_bitacoras_con_tiempo'] = bitacoras_con_tiempo.count()
+            avg_seconds = None
+            if kpi['total_bitacoras_con_tiempo'] > 0:
+                tiempos = bitacoras_con_tiempo.annotate(
+                    duracion=ExpressionWrapper(
+                        F('fecha_fin_calculo') - F('fecha_inicio_calculo'),
+                        output_field=DurationField()
+                    )
+                ).values_list('duracion', flat=True)
+                total_seconds = sum(t.total_seconds() for t in tiempos if t and t.total_seconds() > 0)
+                count_valid = sum(1 for t in tiempos if t and t.total_seconds() > 0)
+                if count_valid > 0:
+                    avg_seconds = total_seconds / count_valid
+                    if avg_seconds < 3600:
+                        kpi['tiempo_promedio_bitacora'] = f"{int(avg_seconds // 60)}m {int(avg_seconds % 60)}s"
+                    else:
+                        horas = int(avg_seconds // 3600)
+                        minutos = int((avg_seconds % 3600) // 60)
+                        kpi['tiempo_promedio_bitacora'] = f"{horas}h {minutos}m"
+                    kpi['tiempo_promedio_segundos'] = round(avg_seconds, 1)
+                else:
+                    kpi['tiempo_promedio_bitacora'] = None
+                    kpi['tiempo_promedio_segundos'] = None
+            else:
+                kpi['tiempo_promedio_bitacora'] = None
+                kpi['tiempo_promedio_segundos'] = None
+
+            def _calc_timing_stats(qs):
+                total_con_tiempo = qs.count()
+                avg_str = None
+                if total_con_tiempo > 0:
+                    tiempos = qs.annotate(
+                        duracion=ExpressionWrapper(
+                            F('fecha_fin_calculo') - F('fecha_inicio_calculo'),
+                            output_field=DurationField()
+                        )
+                    ).values_list('duracion', flat=True)
+                    segs = [t.total_seconds() for t in tiempos if t and t.total_seconds() > 0]
+                    if segs:
+                        avg_s = sum(segs) / len(segs)
+                        if avg_s < 3600:
+                            avg_str = f"{int(avg_s // 60)}m {int(avg_s % 60)}s"
+                        else:
+                            horas = int(avg_s // 3600)
+                            minutos = int((avg_s % 3600) // 60)
+                            avg_str = f"{horas}h {minutos}m"
+                return total_con_tiempo, avg_str
+
+            actividades_con_tiempo = Actividad.objects.filter(
+                clase__in=todas_clases_ids,
+                fecha_inicio_calculo__isnull=False,
+                fecha_fin_calculo__isnull=False,
+            )
+            kpi['total_actividades_con_tiempo'], kpi['tiempo_promedio_actividad'] = _calc_timing_stats(actividades_con_tiempo)
+
+            planificaciones_con_tiempo = Planificacion.objects.filter(
+                clase__in=todas_clases_ids,
+                fecha_inicio_calculo__isnull=False,
+                fecha_fin_calculo__isnull=False,
+            )
+            kpi['total_planificaciones_con_tiempo'], kpi['tiempo_promedio_planificacion'] = _calc_timing_stats(planificaciones_con_tiempo)
+
+            all_students_set = set()
+            for data in clases_por_curso.values():
+                for est in data['estudiantes']:
+                    all_students_set.add(est.pk)
+            kpi['total_estudiantes'] = len(all_students_set)
+            kpi['total_cursos'] = len(clases_por_curso)
+
             for curso_nombre, data in clases_por_curso.items():
+                curso_clase_ids = data['clase_ids']
+                curso_actividades = actividades_por_curso.get(curso_nombre, [])
+                total_acts = len(curso_actividades)
+                total_ent_curso = sum(
+                    a.entregas.count() for a in curso_actividades
+                )
+                total_entregadas_curso = sum(
+                    a.entregas.filter(calificacion__isnull=False).count()
+                    for a in curso_actividades
+                )
+                prom_curso = None
+                curso_entregas_calif = Entrega.objects.filter(
+                    actividad__in=curso_actividades,
+                    calificacion__isnull=False
+                ).aggregate(avg=Avg('calificacion'))['avg']
+                if curso_entregas_calif:
+                    prom_curso = round(curso_entregas_calif, 1)
+
+                tasa_asistencia_curso = None
+                asistencias_curso = AsistenciaClase.objects.filter(clase__in=curso_clase_ids)
+                total_asist_curso = asistencias_curso.count()
+                if total_asist_curso > 0:
+                    presentes_curso = asistencias_curso.filter(
+                        estado=AsistenciaClase.EstadoAsistencia.PRESENTE
+                    ).count()
+                    tasa_asistencia_curso = round((presentes_curso / total_asist_curso) * 100, 1)
+
+                planif_count = Planificacion.objects.filter(
+                    clase__in=curso_clase_ids
+                ).count()
+
+                bitacora_count = BitacoraPedagogica.objects.filter(
+                    clase__in=curso_clase_ids
+                ).count()
+
+                bitacoras_tiempo_curso = BitacoraPedagogica.objects.filter(
+                    clase__in=curso_clase_ids,
+                    fecha_inicio_calculo__isnull=False,
+                    fecha_fin_calculo__isnull=False,
+                )
+                curso_bitacoras_con_tiempo = bitacoras_tiempo_curso.count()
+                tiempo_promedio_curso_str = None
+                if curso_bitacoras_con_tiempo > 0:
+                    tiempos_curso = bitacoras_tiempo_curso.annotate(
+                        duracion=ExpressionWrapper(
+                            F('fecha_fin_calculo') - F('fecha_inicio_calculo'),
+                            output_field=DurationField()
+                        )
+                    ).values_list('duracion', flat=True)
+                    segs = [t.total_seconds() for t in tiempos_curso if t and t.total_seconds() > 0]
+                    if segs:
+                        avg_s = sum(segs) / len(segs)
+                        if avg_s < 3600:
+                            tiempo_promedio_curso_str = f"{int(avg_s // 60)}m {int(avg_s % 60)}s"
+                        else:
+                            tiempo_promedio_curso_str = f"{int(avg_s // 3600)}h {int((avg_s % 3600) // 60)}m"
+
+                actividades_tiempo_curso = Actividad.objects.filter(
+                    clase__in=curso_clase_ids,
+                    fecha_inicio_calculo__isnull=False,
+                    fecha_fin_calculo__isnull=False,
+                )
+                curso_actividades_con_tiempo, tiempo_promedio_actividad_str = _calc_timing_stats(actividades_tiempo_curso)
+
+                planificaciones_tiempo_curso = Planificacion.objects.filter(
+                    clase__in=curso_clase_ids,
+                    fecha_inicio_calculo__isnull=False,
+                    fecha_fin_calculo__isnull=False,
+                )
+                curso_planificaciones_con_tiempo, tiempo_promedio_planificacion_str = _calc_timing_stats(planificaciones_tiempo_curso)
+
                 cursos_con_clases.append({
                     'curso': data['curso'],
                     'clases': data['clases'],
                     'estudiantes': data['estudiantes'],
-                    'actividades': actividades_por_curso.get(curso_nombre, []),
+                    'actividades': curso_actividades,
+                    'total_actividades': total_acts,
+                    'total_entregas': total_ent_curso,
+                    'total_entregas_calificadas': total_entregadas_curso,
+                    'promedio': prom_curso,
+                    'tasa_asistencia': tasa_asistencia_curso,
+                    'planificaciones': planif_count,
+                    'bitacoras': bitacora_count,
+                    'num_estudiantes': len(data['estudiantes']),
+                    'bitacoras_con_tiempo': curso_bitacoras_con_tiempo,
+                    'tiempo_promedio_bitacora': tiempo_promedio_curso_str,
+                    'actividades_con_tiempo': curso_actividades_con_tiempo,
+                    'tiempo_promedio_actividad': tiempo_promedio_actividad_str,
+                    'planificaciones_con_tiempo': curso_planificaciones_con_tiempo,
+                    'tiempo_promedio_planificacion': tiempo_promedio_planificacion_str,
                 })
 
         context['periodo_actual'] = periodo_actual
         context['cursos_con_clases'] = cursos_con_clases
+        context['kpi'] = kpi
         context['notificaciones'] = Notificacion.objects.filter(
             Q(audiencia=Notificacion.TargetAudiencia.TODOS) |
             Q(audiencia=Notificacion.TargetAudiencia.MAESTROS)
@@ -277,12 +480,20 @@ class ActividadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.clase = self.clase
+        inicio_str = self.request.session.pop('actividad_inicio', None)
+        if inicio_str:
+            try:
+                form.instance.fecha_inicio_calculo = timezone.datetime.fromisoformat(inicio_str)
+            except (ValueError, TypeError):
+                pass
+        form.instance.fecha_fin_calculo = timezone.now()
         messages.success(self.request, f"Actividad '{form.instance.titulo}' creada exitosamente.")
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo'] = f"Nueva Actividad - {self.clase.curso.nombre}"
+        self.request.session['actividad_inicio'] = timezone.now().isoformat()
         return context
 
     def get_success_url(self):
@@ -384,6 +595,7 @@ class ActividadUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        form.instance.fecha_fin_calculo = timezone.now()
         messages.success(self.request, "Actividad actualizada exitosamente.")
         return super().form_valid(form)
 
@@ -753,6 +965,13 @@ class PlanificacionCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVie
 
     def form_valid(self, form):
         form.instance.clase = self.clase
+        inicio_str = self.request.session.pop('planificacion_inicio', None)
+        if inicio_str:
+            try:
+                form.instance.fecha_inicio_calculo = timezone.datetime.fromisoformat(inicio_str)
+            except (ValueError, TypeError):
+                pass
+        form.instance.fecha_fin_calculo = timezone.now()
         messages.success(self.request, "Planificación creada exitosamente.")
         return super().form_valid(form)
 
@@ -760,6 +979,7 @@ class PlanificacionCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVie
         context = super().get_context_data(**kwargs)
         context['titulo'] = f"Nueva Planificación - {self.clase.curso.nombre}"
         context['clase_pk'] = self.clase.pk
+        self.request.session['planificacion_inicio'] = timezone.now().isoformat()
         return context
 
     def get_success_url(self):
@@ -788,6 +1008,7 @@ class PlanificacionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
         return kwargs
 
     def form_valid(self, form):
+        form.instance.fecha_fin_calculo = timezone.now()
         messages.success(self.request, "Planificación actualizada exitosamente.")
         return super().form_valid(form)
 

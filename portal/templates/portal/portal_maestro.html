@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Mi Portal de Maestro{% endblock %}
+{% block title %}Dashboard - {{ user.get_full_name }}{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    
-    <!-- Welcome Card -->
+
+    <!-- Welcome Header -->
     <div class="rounded-3xl shadow-2xl p-10 text-white relative overflow-hidden" style="background: linear-gradient(135deg, #2D4C6B 0%, #1f3750 100%);">
-        <!-- Decorative elements -->
         <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
         <div class="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-24 -mb-24"></div>
-        
         <div class="flex justify-between items-center relative z-10">
             <div class="flex items-center space-x-6">
                 <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-6">
@@ -21,33 +19,210 @@
                         <i class="fas fa-calendar-alt mr-1"></i> {{ periodo_actual.nombre|default:"Sin periodo activo" }}
                     </p>
                     <h1 class="text-4xl font-bold mb-2">
-                        Bienvenido, Profesor {{ user.last_name }} 👨‍🏫
+                        Bienvenido, Profesor {{ user.last_name }}
                     </h1>
-                    <p class="text-lg opacity-90">Panel de control del maestro</p>
+                    <p class="text-lg opacity-90">Panel de control y métricas del maestro</p>
                 </div>
             </div>
-            <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-6 border-2 border-white border-opacity-30">
-                <p class="text-sm opacity-90 mb-2">Total de clases</p>
-                <p class="text-5xl font-bold">{{ cursos_con_clases|length }}</p>
-                <p class="text-xs opacity-75 mt-1">Materias este periodo</p>
-                <p class="text-xs opacity-75 mt-1">Asignadas este periodo</p>
+            <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-6 border-2 border-white border-opacity-30 text-center min-w-[140px]">
+                <p class="text-sm opacity-90 mb-2">Cursos activos</p>
+                <p class="text-5xl font-bold">{{ kpi.total_cursos }}</p>
+                <p class="text-xs opacity-75 mt-1">Este periodo</p>
             </div>
         </div>
     </div>
 
-    <!-- Classes Section -->
+    <!-- KPI Cards Row -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">{{ kpi.total_estudiantes }}</p>
+            <p class="text-sm text-gray-500 mt-1">Estudiantes a cargo</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-book text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">{{ kpi.total_cursos }}</p>
+            <p class="text-sm text-gray-500 mt-1">Cursos asignados</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">{{ kpi.total_clases_semana }}</p>
+            <p class="text-sm text-gray-500 mt-1">Clases por semana</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-amber-100 text-amber-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tasks text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">{{ kpi.total_actividades }}</p>
+            <p class="text-sm text-gray-500 mt-1">Actividades creadas</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-star text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">
+                {% if kpi.promedio_general %}{{ kpi.promedio_general }}{% else %}-{% endif %}
+            </p>
+            <p class="text-sm text-gray-500 mt-1">Promedio general</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <div class="bg-rose-100 text-rose-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-check text-lg"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-800">
+                {% if kpi.tasa_asistencia %}{{ kpi.tasa_asistencia }}%{% else %}-{% endif %}
+            </p>
+            <p class="text-sm text-gray-500 mt-1">Asistencia promedio</p>
+        </div>
+    </div>
+
+    <!-- Secondary KPI Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Entregas recibidas</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ kpi.total_entregas }}</p>
+                </div>
+                <div class="bg-cyan-100 text-cyan-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-file-upload text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Entregas calificadas</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                        {{ kpi.total_entregas_calificadas }}
+                        {% if kpi.total_entregas > 0 %}
+                        <span class="text-sm font-normal text-gray-400">
+                            ({{ kpi.total_entregas_calificadas|floatformat:0 }}/{{ kpi.total_entregas }})
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="bg-emerald-100 text-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check-double text-xl"></i>
+                </div>
+            </div>
+            {% if kpi.total_entregas > 0 %}
+            <div class="mt-3 w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: {% widthratio kpi.total_entregas_calificadas kpi.total_entregas 100 %}%"></div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">Planif. / Bitácoras</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ kpi.total_planificaciones }} / {{ kpi.total_bitacoras }}</p>
+                </div>
+                <div class="bg-orange-100 text-orange-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timing Metrics -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <div class="bg-teal-100 text-teal-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-stopwatch"></i>
+            </div>
+            Medición de Tiempo
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Bitácora Card -->
+            <div class="bg-teal-50 rounded-xl p-5 border border-teal-100">
+                <p class="text-sm text-teal-700 mb-3 flex items-center font-semibold">
+                    <i class="fas fa-book-open mr-2"></i> Bitácora Pedagógica
+                </p>
+                <p class="text-3xl font-bold text-teal-800 mb-2">
+                    {{ kpi.total_bitacoras_con_tiempo }}
+                </p>
+                <p class="text-sm text-teal-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    {% if kpi.tiempo_promedio_bitacora %}
+                        {{ kpi.tiempo_promedio_bitacora }}
+                    {% else %}
+                        <span class="text-teal-400">Sin datos</span>
+                    {% endif %}
+                </p>
+            </div>
+            <!-- Actividad Card -->
+            <div class="bg-indigo-50 rounded-xl p-5 border border-indigo-100">
+                <p class="text-sm text-indigo-700 mb-3 flex items-center font-semibold">
+                    <i class="fas fa-tasks mr-2"></i> Actividad
+                </p>
+                <p class="text-3xl font-bold text-indigo-800 mb-2">
+                    {{ kpi.total_actividades_con_tiempo }}
+                </p>
+                <p class="text-sm text-indigo-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    {% if kpi.tiempo_promedio_actividad %}
+                        {{ kpi.tiempo_promedio_actividad }}
+                    {% else %}
+                        <span class="text-indigo-400">Sin datos</span>
+                    {% endif %}
+                </p>
+            </div>
+            <!-- Planificación Card -->
+            <div class="bg-amber-50 rounded-xl p-5 border border-amber-100">
+                <p class="text-sm text-amber-700 mb-3 flex items-center font-semibold">
+                    <i class="fas fa-calendar-alt mr-2"></i> Planificación
+                </p>
+                <p class="text-3xl font-bold text-amber-800 mb-2">
+                    {{ kpi.total_planificaciones_con_tiempo }}
+                </p>
+                <p class="text-sm text-amber-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    {% if kpi.tiempo_promedio_planificacion %}
+                        {{ kpi.tiempo_promedio_planificacion }}
+                    {% else %}
+                        <span class="text-amber-400">Sin datos</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics by Course -->
     <div class="space-y-4">
         <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-            <div class="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
-                <i class="fas fa-chalkboard"></i>
+            <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-chart-bar"></i>
             </div>
-            Mis Clases
+            Analítica por Curso
         </h2>
 
         {% if cursos_con_clases %}
             {% for item in cursos_con_clases %}
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
-                
                 <!-- Course Header -->
                 <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b border-gray-200">
                     <div class="flex justify-between items-start">
@@ -65,25 +240,24 @@
                         </div>
                         <div class="flex flex-wrap gap-2 justify-end">
                             {% with primera_clase=item.clases|first %}
-                            <a href="{% url 'planificacion_list' primera_clase.pk %}" 
+                            <a href="{% url 'planificacion_list' primera_clase.pk %}"
                                class="bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
                                 <i class="fas fa-clipboard-list mr-1"></i> Planificación
                             </a>
-                            <a href="{% url 'tomar_asistencia' primera_clase.pk %}" 
+                            <a href="{% url 'tomar_asistencia' primera_clase.pk %}"
                                class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
                                 <i class="fas fa-user-check mr-1"></i> Asistencia
                             </a>
-                            <a href="{% url 'bitacora_list' primera_clase.pk %}" 
+                            <a href="{% url 'bitacora_list' primera_clase.pk %}"
                                class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
                                 <i class="fas fa-book-open mr-1"></i> Diario
                             </a>
-                            <a href="{% url 'descargar_reporte_ia' primera_clase.pk %}" 
-                                class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                                target="_blank"
-                                title="Generar Reporte con IA">
+                            <a href="{% url 'descargar_reporte_ia' primera_clase.pk %}"
+                               class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                               target="_blank" title="Generar Reporte con IA">
                                 <i class="fas fa-robot mr-1"></i> Reporte IA
                             </a>
-                            <a href="{% url 'actividad_create' primera_clase.pk %}" 
+                            <a href="{% url 'actividad_create' primera_clase.pk %}"
                                class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
                                 <i class="fas fa-plus mr-1"></i> Nueva Actividad
                             </a>
@@ -92,35 +266,161 @@
                     </div>
                 </div>
 
-                <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    <!-- Activities -->
-                    <div>
-                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-tasks text-blue-600 mr-2"></i> Actividades del Curso
-                        </h4>
+                <!-- Course Metrics -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Metric: Students & Grades -->
+                        <div class="bg-gray-50 rounded-xl p-5">
+                            <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
+                                <i class="fas fa-users text-blue-500 mr-2"></i> Estudiantes
+                            </h4>
+                            <p class="text-3xl font-bold text-gray-800 mb-1">{{ item.num_estudiantes }}</p>
+                            <p class="text-sm text-gray-500">Inscritos en este curso</p>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 mb-1">
+                                    <i class="fas fa-star text-amber-500 mr-1"></i> Promedio:
+                                    <span class="font-bold text-lg">
+                                        {% if item.promedio %}{{ item.promedio }}{% else %}<span class="text-gray-400">-</span>{% endif %}
+                                    </span>
+                                </p>
+                                {% if item.promedio %}
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="h-2.5 rounded-full {% if item.promedio >= 70 %}bg-emerald-500{% elif item.promedio >= 60 %}bg-amber-500{% else %}bg-red-500{% endif %}"
+                                         style="width: {{ item.promedio }}%"></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% if item.estudiantes %}
+                            <details class="mt-4">
+                                <summary class="text-sm text-blue-600 cursor-pointer hover:text-blue-800">
+                                    <i class="fas fa-list mr-1"></i> Ver lista
+                                </summary>
+                                <ul class="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                                    {% for estudiante in item.estudiantes %}
+                                    <li class="text-sm text-gray-600 flex items-center py-1">
+                                        <div class="w-6 h-6 bg-gradient-to-r from-blue-400 to-indigo-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">
+                                            {{ estudiante.user.first_name|first }}{{ estudiante.user.last_name|first }}
+                                        </div>
+                                        {{ estudiante.user.get_full_name }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </details>
+                            {% endif %}
+                        </div>
+
+                        <!-- Metric: Attendance -->
+                        <div class="bg-gray-50 rounded-xl p-5">
+                            <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
+                                <i class="fas fa-user-check text-green-500 mr-2"></i> Asistencia
+                            </h4>
+                            <p class="text-3xl font-bold text-gray-800 mb-1">
+                                {% if item.tasa_asistencia %}{{ item.tasa_asistencia }}%{% else %}<span class="text-gray-400">-</span>{% endif %}
+                            </p>
+                            <p class="text-sm text-gray-500">Tasa de asistencia</p>
+                            {% if item.tasa_asistencia %}
+                            <div class="mt-4">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="h-2.5 rounded-full {% if item.tasa_asistencia >= 90 %}bg-emerald-500{% elif item.tasa_asistencia >= 75 %}bg-amber-500{% else %}bg-red-500{% endif %}"
+                                         style="width: {{ item.tasa_asistencia }}%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>0%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Metric: Activities & Planning -->
+                        <div class="bg-gray-50 rounded-xl p-5">
+                            <h4 class="font-semibold text-gray-700 mb-4 flex items-center">
+                                <i class="fas fa-tasks text-purple-500 mr-2"></i> Actividades
+                            </h4>
+                            <p class="text-3xl font-bold text-gray-800 mb-1">{{ item.total_actividades }}</p>
+                            <p class="text-sm text-gray-500">Actividades creadas</p>
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-center">
+                                <div class="bg-white rounded-lg p-3 border border-gray-100">
+                                    <p class="text-lg font-bold text-cyan-600">{{ item.total_entregas }}</p>
+                                    <p class="text-xs text-gray-500">Entregas</p>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 border border-gray-100">
+                                    <p class="text-lg font-bold text-emerald-600">{{ item.total_entregas_calificadas }}</p>
+                                    <p class="text-xs text-gray-500">Calificadas</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 grid grid-cols-2 gap-2 text-center">
+                                <div class="bg-white rounded-lg p-3 border border-gray-100">
+                                    <p class="text-lg font-bold text-indigo-600">{{ item.planificaciones }}</p>
+                                    <p class="text-xs text-gray-500">Planific.</p>
+                                </div>
+                                <div class="bg-white rounded-lg p-3 border border-gray-100">
+                                    <p class="text-lg font-bold text-orange-600">{{ item.bitacoras }}</p>
+                                    <p class="text-xs text-gray-500">Bitácoras</p>
+                                </div>
+                            </div>
+                            {% if item.bitacoras_con_tiempo or item.actividades_con_tiempo or item.planificaciones_con_tiempo %}
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                                    <i class="fas fa-stopwatch mr-1"></i> Tiempo de llenado
+                                </p>
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-teal-600"><i class="fas fa-book-open mr-1 w-4"></i> Bitácora:</span>
+                                        <span class="font-bold text-teal-700">{{ item.bitacoras_con_tiempo }}/{{ item.bitacoras }} · {{ item.tiempo_promedio_bitacora|default:"-" }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-indigo-600"><i class="fas fa-tasks mr-1 w-4"></i> Actividad:</span>
+                                        <span class="font-bold text-indigo-700">{{ item.actividades_con_tiempo }}/{{ item.total_actividades }} · {{ item.tiempo_promedio_actividad|default:"-" }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-amber-600"><i class="fas fa-calendar-alt mr-1 w-4"></i> Planificación:</span>
+                                        <span class="font-bold text-amber-700">{{ item.planificaciones_con_tiempo }}/{{ item.planificaciones }} · {{ item.tiempo_promedio_planificacion|default:"-" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Activities List -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-tasks text-blue-600 mr-2"></i> Actividades del Curso
+                            </h4>
+                            <span class="text-sm text-gray-500">{{ item.actividades|length }} actividad(es)</span>
+                        </div>
                         {% if item.actividades %}
                             <ul class="space-y-2">
                             {% for actividad in item.actividades %}
                                 <li class="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors duration-150">
-                                    <span class="text-sm font-medium text-gray-700">
-                                        <i class="fas fa-file-alt text-gray-400 mr-2"></i>{{ actividad.titulo }}
-                                    </span>
-                                    <div class="flex items-center gap-2">
-                                        <a href="{% url 'actividad_entregas' actividad.pk %}" 
-                                           class="text-blue-600 hover:text-blue-700 font-semibold text-sm">
-                                            <span class="bg-blue-100 px-3 py-1 rounded-full">
-                                                {{ actividad.entregas.count }}/{{ item.estudiantes|length }}
-                                            </span>
-                                        </a>
-                                        <a href="{% url 'actividad_update' actividad.pk %}" 
-                                           class="text-amber-600 hover:text-amber-800 text-sm" title="Editar actividad">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'actividad_delete' actividad.pk %}" 
-                                           class="text-red-600 hover:text-red-800 text-sm" title="Eliminar actividad">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                    <div class="flex-1">
+                                        <span class="text-sm font-medium text-gray-700">
+                                            <i class="fas fa-file-alt text-gray-400 mr-2"></i>{{ actividad.titulo }}
+                                        </span>
+                                        <span class="text-xs text-gray-400 ml-2">
+                                            <i class="far fa-calendar-alt mr-1"></i>{{ actividad.fecha_entrega|date:"d/m/Y" }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-gray-500">
+                                            <span class="font-semibold">{{ actividad.entregas.count }}</span>/{{ item.num_estudiantes }} entregas
+                                        </span>
+                                        <div class="flex items-center gap-1">
+                                            <a href="{% url 'actividad_entregas' actividad.pk %}"
+                                               class="text-blue-600 hover:text-blue-700 font-semibold text-sm px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors">
+                                                <i class="fas fa-eye mr-1"></i>Ver
+                                            </a>
+                                            <a href="{% url 'actividad_update' actividad.pk %}"
+                                               class="text-amber-600 hover:text-amber-800 p-2" title="Editar actividad">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'actividad_delete' actividad.pk %}"
+                                               class="text-red-600 hover:text-red-800 p-2" title="Eliminar actividad">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </li>
                             {% endfor %}
@@ -131,38 +431,7 @@
                             </p>
                         {% endif %}
                     </div>
-
-                    <!-- Students -->
-                    <div>
-                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-users text-green-600 mr-2"></i> 
-                            Estudiantes Inscritos ({{ item.estudiantes|length }})
-                        </h4>
-                        {% if item.estudiantes %}
-                            <div class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
-                                <ul class="space-y-2">
-                                    {% for estudiante in item.estudiantes %}
-                                        <li class="flex items-center text-gray-700 p-2 hover:bg-white rounded transition-colors duration-150">
-                                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mr-3">
-                                                {{ estudiante.user.first_name|first }}{{ estudiante.user.last_name|first }}
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-medium">{{ estudiante.user.get_full_name }}</p>
-                                                <p class="text-xs text-gray-500">{{ estudiante.matricula }}</p>
-                                            </div>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% else %}
-                            <p class="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg text-center">
-                                <i class="fas fa-info-circle mr-1"></i> Aún no hay estudiantes inscritos
-                            </p>
-                        {% endif %}
-                    </div>
-
                 </div>
-
             </div>
             {% endfor %}
         {% else %}
@@ -178,7 +447,7 @@
         {% endif %}
     </div>
 
-    <!-- Notifications Section -->
+    <!-- Notifications -->
     {% if notificaciones %}
     <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
@@ -204,4 +473,5 @@
     </div>
     {% endif %}
 </div>
+
 {% endblock %}

@@ -7,7 +7,7 @@ from .models import PeriodoAcademico, Clase, Curso, BitacoraPedagogica, Pago, Ca
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.conf import settings
-import datetime
+from django.utils import timezone
 from users.models import Maestro, User
 from .models import Planificacion
 from django.http import JsonResponse, HttpResponseServerError, HttpResponse
@@ -238,15 +238,21 @@ class BitacoraCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['clase'] = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
         context['titulo'] = 'Nueva Entrada de Diario'
+        self.request.session['bitacora_inicio'] = timezone.now().isoformat()
         return context
 
     def form_valid(self, form):
-        # Asignamos la clase automáticamente antes de guardar
         form.instance.clase = get_object_or_404(Clase, pk=self.kwargs['clase_pk'])
+        inicio_str = self.request.session.pop('bitacora_inicio', None)
+        if inicio_str:
+            try:
+                form.instance.fecha_inicio_calculo = timezone.datetime.fromisoformat(inicio_str)
+            except (ValueError, TypeError):
+                pass
+        form.instance.fecha_fin_calculo = timezone.now()
         return super().form_valid(form)
 
     def get_success_url(self):
-        # Redirige de vuelta a la lista del diario de esa clase
         return reverse_lazy('bitacora_list', kwargs={'clase_pk': self.kwargs['clase_pk']})
 
 class BitacoraUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -267,6 +273,10 @@ class BitacoraUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['clase'] = self.get_object().clase
         context['titulo'] = 'Editar Entrada de Diario'
         return context
+
+    def form_valid(self, form):
+        form.instance.fecha_fin_calculo = timezone.now()
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('bitacora_list', kwargs={'clase_pk': self.object.clase.pk})

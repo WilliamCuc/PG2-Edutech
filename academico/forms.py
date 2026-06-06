@@ -79,9 +79,9 @@ class BitacoraForm(forms.ModelForm):
         model = BitacoraPedagogica
         # Excluimos la 'clase' porque la tomaremos de la URL
         fields = [
-            'fecha', 
+            'fecha',
             'objetivos_sesion',
-            'temas_cubiertos', 
+            'temas_cubiertos',
             'planificacion',
             'recursos_usados',
             'adaptacion_curricular',

@@ -108,6 +108,8 @@ class Actividad(models.Model):
         null=True, 
         verbose_name="Archivo Adjunto (PDF, etc.)"
     )
+    fecha_inicio_calculo = models.DateTimeField(null=True, blank=True, verbose_name="Inicio del llenado")
+    fecha_fin_calculo = models.DateTimeField(null=True, blank=True, verbose_name="Fin del llenado")
 
     class Meta:
         verbose_name = "Actividad"
@@ -285,6 +287,8 @@ class Planificacion(models.Model):
         related_name='planificaciones',
         verbose_name="Competencias a Desarrollar"
     )
+    fecha_inicio_calculo = models.DateTimeField(null=True, blank=True, verbose_name="Inicio del llenado")
+    fecha_fin_calculo = models.DateTimeField(null=True, blank=True, verbose_name="Fin del llenado")
 
     class Meta:
         verbose_name = "Planificación"
@@ -372,6 +376,16 @@ class BitacoraPedagogica(models.Model):
         verbose_name="Observaciones (Comportamiento, Aprendizaje)"
     )
     
+    # --- CAMPOS DE MEDICIÓN DE TIEMPO ---
+    fecha_inicio_calculo = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name="Inicio del llenado"
+    )
+    fecha_fin_calculo = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name="Fin del llenado"
+    )
+
     # --- NUEVOS CAMPOS DE EVIDENCIA ---
     reflexiones_logros = models.TextField(
         blank=True, 
